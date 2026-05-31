@@ -1,4 +1,4 @@
-from polyhedral_study_assistant.normalize import normalize_inequality
+from psa.normalize import normalize_inequality
 
 
 def test_gcd_normalization() -> None:
