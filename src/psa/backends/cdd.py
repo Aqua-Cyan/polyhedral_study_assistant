@@ -1,8 +1,18 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from fractions import Fraction
+from math import lcm
 
 from psa.inequality import LinearInequality
+
+
+def _row_to_integer_values(row: Iterable[object]) -> list[int]:
+    fractions = [Fraction(value) for value in row]
+    scale = 1
+    for value in fractions:
+        scale = lcm(scale, value.denominator)
+    return [int(value * scale) for value in fractions]
 
 
 def convex_hull_inequalities_from_points(
@@ -67,7 +77,7 @@ def convex_hull_inequalities_from_points(
             # For now, skip equations. Later we should represent them explicitly.
             continue
 
-        values = [int(v) for v in row]
+        values = _row_to_integer_values(row)
         constant = values[0]
         coeffs_ge = values[1:]
 
