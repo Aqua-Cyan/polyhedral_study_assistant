@@ -13,6 +13,9 @@ dependencies = []
 dev = [
   "pytest>=8.0"
 ]
+cdd = [
+  "pycddlib>=3.0.2"
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
