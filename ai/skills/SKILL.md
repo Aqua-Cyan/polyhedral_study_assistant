@@ -112,3 +112,25 @@ Therefore, for parametric 0-1 sets:
 2. enumerate feasible 0-1 points for that concrete instance;
 3. compute the convex hull of those points with pycddlib;
 4. analyze the resulting inequalities.
+
+## Do not report only concrete facets
+
+For parametric integer sets, never make the main report a list of instance-level inequalities.
+
+Concrete inequalities from cddlib/PORTA are evidence only. The main output must attempt to infer symbolic inequality families.
+
+For each nontrivial concrete facet:
+
+1. Rewrite it using the user's original notation.
+2. Identify the source original constraints.
+3. Derive it for the concrete instance using c-MIR, aggregation, or binary bound substitution.
+4. Generalize the derivation to a symbolic family.
+5. State the symbolic family before listing covered instances.
+
+If no symbolic family is found, put the concrete facet in an "unmatched facets" section.
+
+## Report organization rule
+
+Organize research reports by inequality family, not by computational instance.
+
+Instance-level output belongs only in a compact evidence table or appendix. Do not list all variable bounds or all concrete inequalities in the main body unless the user explicitly asks for raw computational output.

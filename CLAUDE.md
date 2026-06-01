@@ -19,6 +19,8 @@ Never claim that a candidate inequality system is a complete convex hull descrip
 
 If only computational evidence is available, label the result as `experimentally supported` or `conjectural`.
 
+Problem-specific research models should usually live under `examples/<name>/` or `studies/<name>/`, not directly under `src/psa/`, unless they are intended to become reusable built-in benchmarks.
+
 ## Research workflow
 
 For integer hull discovery tasks, follow this sequence:
@@ -33,6 +35,22 @@ For integer hull discovery tasks, follow this sequence:
 8. Generalize matched facets into parameterized candidate families.
 9. Run coverage checks on small instances.
 10. Record unresolved proof obligations.
+
+Computed facets are not the final output.
+
+For a parametric integer set, the final research output should be symbolic inequality families with derivations.
+
+A report that only lists instance-level facets is considered incomplete.
+
+For every nontrivial computed facet, the assistant must attempt:
+
+1. source-constraint identification;
+2. concrete c-MIR or aggregation derivation;
+3. symbolic generalization;
+4. coverage check against computed facets;
+5. proof-status labeling.
+
+Only unmatched facets may remain as concrete instance-level inequalities.
 
 ## Coding rules
 
@@ -52,3 +70,5 @@ The first implementation should focus on:
 - `normalize.py`: gcd reduction, sign normalization, support extraction;
 - `report.py`: simple Markdown reports;
 - tests for normalization.
+
+- Do not silently discard equations returned by a polyhedral backend.
