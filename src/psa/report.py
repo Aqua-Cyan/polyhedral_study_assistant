@@ -1,8 +1,56 @@
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping, Sequence
+from dataclasses import dataclass, field
 
 from psa.inequality import LinearInequality
+
+
+@dataclass(frozen=True)
+class ConcreteFacetReference:
+    """Reference to a computed concrete facet used as evidence.
+
+    This object should be used only as supporting evidence for a symbolic
+    family. It should not drive the main report structure.
+    """
+
+    inequality: str
+    source: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class InequalityFamily:
+    """A symbolic inequality family discovered from computed facets."""
+
+    name: str
+    statement: str
+    derivation: Sequence[str] | str
+    validity_status: str
+    facetness_status: str = "unproved"
+    completeness_status: str = "not claimed"
+    conditions: Sequence[str] = field(default_factory=tuple)
+    covered_facets: Sequence[ConcreteFacetReference | str] = field(default_factory=tuple)
+    notes: Sequence[str] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class CoverageSummary:
+    """Compact evidence that a symbolic family explains computed facets."""
+
+    family: str
+    covered_facets: int
+    sources: Sequence[str] = field(default_factory=tuple)
+    notes: str = ""
+
+
+@dataclass(frozen=True)
+class UnmatchedFacet:
+    """A computed facet that has not yet been explained by a symbolic family."""
+
+    inequality: str
+    source: str | None = None
+    reason: str = "no symbolic derivation found"
 
 
 def format_inequality(
@@ -26,127 +74,282 @@ def format_inequality(
     return f"{lhs} {inequality.sense} {inequality.rhs}"
 
 
-def render_malp_initial_report(results: list[dict], candidate_families: list[dict]) -> str:
+def render_family_discovery_report(
+    *,
+    title: str,
+    model_description: str,
+    families: Sequence[InequalityFamily | Mapping],
+    coverage: Sequence[CoverageSummary | Mapping] = (),
+    unmatched_facets: Sequence[UnmatchedFacet | Mapping] = (),
+    proof_obligations: Sequence[str] = (),
+    scope_notes: Sequence[str] = (),
+    appendix: Sequence[str] = (),
+) -> str:
+    """Render a family-first discovery report.
+
+    The report is organized by symbolic inequality families rather than by
+    computational instances. Concrete facets may appear only as evidence,
+    coverage, unmatched items, or appendix material.
+
+    Parameters
+    ----------
+    title:
+        Report title.
+    model_description:
+        General mathematical description of the studied set or model.
+    families:
+        Symbolic inequality families with derivations and status labels.
+    coverage:
+        Compact evidence showing which computed facets are explained by each
+        family.
+    unmatched_facets:
+        Computed facets that are not yet explained by symbolic derivations.
+    proof_obligations:
+        Remaining mathematical tasks.
+    scope_notes:
+        Optional limitations or methodological notes.
+    appendix:
+        Optional appendix lines. Use this for raw computational evidence only.
+    """
+    normalized_families = [_as_family(family) for family in families]
+    normalized_coverage = [_as_coverage(item) for item in coverage]
+    normalized_unmatched = [_as_unmatched_facet(item) for item in unmatched_facets]
+
     lines = [
-        "# MALP initial facet study",
+        f"# {title}",
         "",
         "## Scope and limitations",
         "",
-        "This report studies small MALP instances by exhaustive 0-1 point enumeration and convex-hull computation with the current cdd backend.",
-        "No complete convex-hull claim is made. Any family not directly derived from the original constraints is labeled as experimentally supported or conjectural unless a proof is provided.",
-        "",
-        "## MALP set",
-        "",
-        "We study",
-        "",
-        "`T = { (x, y1, y2) in {0,1}^{|J1 ∪ J2| + 2} : x(J1) >= b1 y1, x(J2) >= b2 y2 }`.",
-        "",
-        "For each instance we use the variable order `(x over J1 ∪ J2 in sorted index order, y1, y2)`.",
-        "We also use the partition `A = J1 \\ J2`, `B = J2 \\ J1`, `C = J1 ∩ J2`.",
-        "",
-        "## Instance catalog",
-        "",
-        "| instance | relation | J1 | J2 | b1 | b2 | dim | feasible points |",
-        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
 
-    for result in results:
-        instance = result["instance"]
-        lines.append(
-            f"| {result['name']} | {instance.relation_type()} | {instance.j1} | {instance.j2} | {instance.b1} | {instance.b2} | {instance.dimension} | {len(result['points'])} |"
-        )
-
-    for result in results:
-        instance = result["instance"]
-        variable_names = instance.variable_names()
+    if scope_notes:
+        for note in scope_notes:
+            lines.append(f"- {note}")
+    else:
         lines.extend(
             [
-                "",
-                f"## {result['name']}",
-                "",
-                f"- relation: `{instance.relation_type()}`",
-                f"- J1 = `{instance.j1}`",
-                f"- J2 = `{instance.j2}`",
-                f"- b = `({instance.b1}, {instance.b2})`",
-                f"- partition: `A={instance.a_only}`, `B={instance.b_only}`, `C={instance.overlap}`",
-                f"- feasible 0-1 points: `{len(result['points'])}`",
-                "",
-                "### Variable bounds",
-                "",
+                "- This report uses computed facets as evidence for symbolic inequality families.",
+                "- Concrete instance-level inequalities are not treated as the final output.",
+                "- No complete convex-hull description is claimed unless a reverse-inclusion proof is provided.",
             ]
         )
-        lines.extend(_render_inequality_bullets(result["variable_bounds"], variable_names))
-
-        lines.extend(["", "### Original constraints appearing in the computed hull", ""])
-        if result["original_constraints"]:
-            lines.extend(_render_inequality_bullets(result["original_constraints"], variable_names))
-        else:
-            lines.append("- none; the computed hull is represented by stronger inequalities for this instance")
-
-        if result["missing_original_constraints"]:
-            lines.extend(["", "### Original constraints not appearing verbatim in the computed hull", ""])
-            lines.extend(
-                _render_inequality_bullets(
-                    result["missing_original_constraints"],
-                    variable_names,
-                )
-            )
-            lines.append("- note: these remain valid original model constraints, but the hull output is using stronger inequalities instead of listing them verbatim")
-
-        lines.extend(["", "### Nontrivial candidate inequalities", ""])
-        if result["nontrivial_candidates"]:
-            lines.extend(
-                _render_inequality_bullets(
-                    result["nontrivial_candidates"],
-                    variable_names,
-                )
-            )
-        else:
-            lines.append("- none observed beyond bounds and the original constraints")
-
-    lines.extend(["", "## Cross-instance candidate families", ""])
-
-    if candidate_families:
-        for family in candidate_families:
-            lines.extend(
-                [
-                    f"### {family['name']}",
-                    "",
-                    f"- status: `{family['status']}`",
-                    f"- observed in: {', '.join(family['instances'])}",
-                    f"- template: `{family['template']}`",
-                    f"- note: {family['note']}",
-                    "",
-                ]
-            )
-    else:
-        lines.append("No recurring nontrivial family was detected across the tested instances.")
 
     lines.extend(
         [
-            "## Proof obligations",
             "",
-            "1. Prove validity of every experimentally supported family for general admissible `(J1, J2, b1, b2)`.",
-            "2. Determine the exact parameter regimes in which each nontrivial family is necessary.",
-            "3. Prove or disprove facetness for each nontrivial family before calling it a facet family.",
-            "4. Check whether the tested hull inequalities are fully covered by the proposed family templates in each regime.",
-            "5. If a complete hull system is ever proposed, prove reverse inclusion and state all assumptions and boundary cases.",
-            "6. Cross-check the small instances with PORTA or another independent backend in a later study.",
+            "## Model",
+            "",
+            model_description.strip(),
+            "",
+            "## Derived symbolic inequality families",
+            "",
+        ]
+    )
+
+    if normalized_families:
+        for family in normalized_families:
+            lines.extend(_render_family(family))
+    else:
+        lines.append("No symbolic inequality family has been derived yet.")
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Coverage of computed facets",
+            "",
+            "This section records computational evidence showing which concrete facets are explained by the symbolic families above.",
+            "It is not a proof of completeness.",
+            "",
+        ]
+    )
+    lines.extend(_render_coverage(normalized_coverage))
+
+    lines.extend(["", "## Unmatched computed facets", ""])
+    if normalized_unmatched:
+        lines.append(
+            "The following computed facets have not yet been explained by a symbolic derivation."
+        )
+        lines.append("")
+        for facet in normalized_unmatched:
+            lines.extend(_render_unmatched_facet(facet))
+    else:
+        lines.append("No unmatched computed facets were reported.")
+
+    lines.extend(["", "## Proof obligations", ""])
+    if proof_obligations:
+        for index, obligation in enumerate(proof_obligations, start=1):
+            lines.append(f"{index}. {obligation}")
+    else:
+        lines.extend(
+            [
+                "1. Prove validity of every symbolic inequality family for all admissible parameters.",
+                "2. For each derived family, record a complete aggregation, c-MIR, lifting, or bound-substitution certificate.",
+                "3. Determine the parameter regimes in which each family is facet-defining.",
+                "4. Check whether all computed nontrivial facets are covered by the reported symbolic families.",
+                "5. Do not claim a complete convex hull description until reverse inclusion is proved.",
+            ]
+        )
+
+    lines.extend(
+        [
             "",
             "## Conclusion",
             "",
-            "The current results are an initial computational study only. They are useful for generating candidate inequalities and organizing proof obligations, but they do not constitute a complete convex-hull description of MALP.",
+            "The current output is a family-discovery report. It presents symbolic inequality families and their derivation status, using computed facets only as evidence. It does not by itself constitute a complete convex-hull description.",
         ]
     )
+
+    if appendix:
+        lines.extend(["", "## Appendix: computational evidence", ""])
+        lines.append(
+            "The appendix may contain raw computational evidence. It is not the main mathematical output."
+        )
+        lines.append("")
+        lines.extend(appendix)
 
     return "\n".join(lines) + "\n"
 
 
-def _render_inequality_bullets(
-    inequalities: Iterable[LinearInequality],
-    variable_names: tuple[str, ...],
-) -> list[str]:
-    return [
-        f"- `{format_inequality(inequality, variable_names)}`"
-        for inequality in inequalities
+def _render_family(family: InequalityFamily) -> list[str]:
+    lines = [
+        f"### {family.name}",
+        "",
+        "#### Symbolic statement",
+        "",
+        family.statement.strip(),
+        "",
     ]
+
+    if family.conditions:
+        lines.extend(["#### Parameter conditions", ""])
+        for condition in family.conditions:
+            lines.append(f"- {condition}")
+        lines.append("")
+
+    lines.extend(["#### Derivation certificate", ""])
+    if isinstance(family.derivation, str):
+        lines.append(family.derivation.strip())
+    else:
+        for step in family.derivation:
+            lines.append(f"- {step}")
+    lines.append("")
+
+    lines.extend(
+        [
+            "#### Status",
+            "",
+            f"- validity: `{family.validity_status}`",
+            f"- facetness: `{family.facetness_status}`",
+            f"- completeness: `{family.completeness_status}`",
+            "",
+        ]
+    )
+
+    if family.covered_facets:
+        lines.extend(["#### Covered computed facets", ""])
+        for facet in family.covered_facets:
+            lines.extend(_render_concrete_facet_reference(facet))
+        lines.append("")
+
+    if family.notes:
+        lines.extend(["#### Notes", ""])
+        for note in family.notes:
+            lines.append(f"- {note}")
+        lines.append("")
+
+    return lines
+
+
+def _render_concrete_facet_reference(
+    facet: ConcreteFacetReference | str,
+) -> list[str]:
+    if isinstance(facet, str):
+        return [f"- {facet}"]
+
+    line = f"- `{facet.inequality}`"
+    details = []
+    if facet.source:
+        details.append(f"source: {facet.source}")
+    if facet.notes:
+        details.append(facet.notes)
+    if details:
+        line += f" ({'; '.join(details)})"
+    return [line]
+
+
+def _render_coverage(coverage: Sequence[CoverageSummary]) -> list[str]:
+    if not coverage:
+        return ["No coverage data was provided.", ""]
+
+    lines = [
+        "| family | covered facets | evidence sources | notes |",
+        "| --- | ---: | --- | --- |",
+    ]
+
+    for item in coverage:
+        sources = ", ".join(item.sources) if item.sources else ""
+        lines.append(
+            f"| {item.family} | {item.covered_facets} | {sources} | {item.notes} |"
+        )
+
+    lines.append("")
+    return lines
+
+
+def _render_unmatched_facet(facet: UnmatchedFacet) -> list[str]:
+    lines = [f"- inequality: `{facet.inequality}`"]
+    if facet.source:
+        lines.append(f"  - source: {facet.source}")
+    lines.append(f"  - reason: {facet.reason}")
+    return lines
+
+
+def _as_family(value: InequalityFamily | Mapping) -> InequalityFamily:
+    if isinstance(value, InequalityFamily):
+        return value
+
+    return InequalityFamily(
+        name=str(value["name"]),
+        statement=str(value["statement"]),
+        derivation=value["derivation"],
+        validity_status=str(value["validity_status"]),
+        facetness_status=str(value.get("facetness_status", "unproved")),
+        completeness_status=str(value.get("completeness_status", "not claimed")),
+        conditions=tuple(str(item) for item in value.get("conditions", ())),
+        covered_facets=tuple(_as_concrete_facet(item) for item in value.get("covered_facets", ())),
+        notes=tuple(str(item) for item in value.get("notes", ())),
+    )
+
+
+def _as_concrete_facet(value: ConcreteFacetReference | str | Mapping) -> ConcreteFacetReference | str:
+    if isinstance(value, ConcreteFacetReference | str):
+        return value
+
+    return ConcreteFacetReference(
+        inequality=str(value["inequality"]),
+        source=str(value["source"]) if value.get("source") is not None else None,
+        notes=str(value["notes"]) if value.get("notes") is not None else None,
+    )
+
+
+def _as_coverage(value: CoverageSummary | Mapping) -> CoverageSummary:
+    if isinstance(value, CoverageSummary):
+        return value
+
+    return CoverageSummary(
+        family=str(value["family"]),
+        covered_facets=int(value.get("covered_facets", 0)),
+        sources=tuple(str(item) for item in value.get("sources", ())),
+        notes=str(value.get("notes", "")),
+    )
+
+
+def _as_unmatched_facet(value: UnmatchedFacet | Mapping) -> UnmatchedFacet:
+    if isinstance(value, UnmatchedFacet):
+        return value
+
+    return UnmatchedFacet(
+        inequality=str(value["inequality"]),
+        source=str(value["source"]) if value.get("source") is not None else None,
+        reason=str(value.get("reason", "no symbolic derivation found")),
+    )
