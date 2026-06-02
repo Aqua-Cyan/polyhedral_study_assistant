@@ -134,3 +134,29 @@ If no symbolic family is found, put the concrete facet in an "unmatched facets" 
 Organize research reports by inequality family, not by computational instance.
 
 Instance-level output belongs only in a compact evidence table or appendix. Do not list all variable bounds or all concrete inequalities in the main body unless the user explicitly asks for raw computational output.
+
+## Unmatched facet derivation protocol
+
+A computed facet must not be reported as merely "unmatched" until the assistant has attempted:
+
+1. identify source constraints by support overlap;
+2. check whether it is a tightened form of one original constraint using binary upper bounds;
+3. check whether it is an aggregation of multiple original constraints;
+4. check whether c-MIR or mixed-integer rounding can produce it;
+5. if a concrete derivation is found, generalize the same derivation to the symbolic model;
+6. only if all attempts fail, place it in the unresolved section with an explicit failure reason.
+
+## Do not stop at unmatched facets
+
+When a computed facet is not covered by an existing symbolic family, do not immediately report it as unmatched.
+
+First perform a derivation attempt:
+
+1. Identify source constraints whose supports overlap the target facet.
+2. Try coefficient tightening using binary upper bounds.
+3. Try nonnegative aggregation of original constraints.
+4. Try c-MIR or c-MIR-style residualization.
+5. If the target facet is derived for the concrete instance, generalize the same derivation symbolically.
+6. Only after these attempts fail may the facet be reported as unresolved.
+
+The report must include the derivation attempt, not just the unresolved inequality.

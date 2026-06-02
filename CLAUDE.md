@@ -72,3 +72,18 @@ The first implementation should focus on:
 - tests for normalization.
 
 - Do not silently discard equations returned by a polyhedral backend.
+
+## Do not stop at unmatched facets
+
+When a computed facet is not covered by an existing symbolic family, do not immediately report it as unmatched.
+
+First perform a derivation attempt:
+
+1. Identify source constraints whose supports overlap the target facet.
+2. Try coefficient tightening using binary upper bounds.
+3. Try nonnegative aggregation of original constraints.
+4. Try c-MIR or c-MIR-style residualization.
+5. If the target facet is derived for the concrete instance, generalize the same derivation symbolically.
+6. Only after these attempts fail may the facet be reported as unresolved.
+
+The report must include the derivation attempt, not just the unresolved inequality.

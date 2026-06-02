@@ -12,3 +12,14 @@ For every nontrivial facet found in a small instance:
 6. State the resulting general valid inequality family.
 7. Report which computed facets are covered by this family.
 8. Only then include the family in the research report.
+
+## Unmatched facet derivation protocol
+
+A computed facet must not be reported as merely "unmatched" until the assistant has attempted:
+
+1. identify source constraints by support overlap;
+2. check whether it is a tightened form of one original constraint using binary upper bounds;
+3. check whether it is an aggregation of multiple original constraints;
+4. check whether c-MIR or mixed-integer rounding can produce it;
+5. if a concrete derivation is found, generalize the same derivation to the symbolic model;
+6. only if all attempts fail, place it in the unresolved section with an explicit failure reason.
