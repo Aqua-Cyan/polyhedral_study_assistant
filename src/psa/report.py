@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
 from psa.inequality import LinearInequality
@@ -17,6 +17,49 @@ class ConcreteFacetReference:
     inequality: str
     source: str | None = None
     notes: str | None = None
+
+
+@dataclass(frozen=True)
+class SourceConstraint:
+    """A source constraint used in a derivation attempt."""
+
+    name: str
+    symbolic_form: str
+    concrete_form: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class DerivationStep:
+    """One step in a derivation attempt."""
+
+    method: str
+    description: str
+    expression: str | None = None
+    status: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class DerivationAttempt:
+    """A structured attempt to derive a computed facet.
+
+    This is used for facets that are not immediately covered by existing
+    symbolic families. A derivation attempt may succeed, remain heuristic,
+    or fail. The report should show these attempts before listing any facet
+    as unresolved.
+    """
+
+    target_facet: str
+    status: str
+    source_constraints: Sequence[SourceConstraint] = field(default_factory=tuple)
+    steps: Sequence[DerivationStep] = field(default_factory=tuple)
+    symbolic_family: str | None = None
+    parameter_conditions: Sequence[str] = field(default_factory=tuple)
+    reconstructed_inequality: str | None = None
+    equality_check: str | None = None
+    failure_reason: str | None = None
+    notes: Sequence[str] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -80,6 +123,7 @@ def render_family_discovery_report(
     model_description: str,
     families: Sequence[InequalityFamily | Mapping],
     coverage: Sequence[CoverageSummary | Mapping] = (),
+    derivation_attempts: Sequence[DerivationAttempt | Mapping] = (),
     unmatched_facets: Sequence[UnmatchedFacet | Mapping] = (),
     proof_obligations: Sequence[str] = (),
     scope_notes: Sequence[str] = (),
@@ -89,7 +133,7 @@ def render_family_discovery_report(
 
     The report is organized by symbolic inequality families rather than by
     computational instances. Concrete facets may appear only as evidence,
-    coverage, unmatched items, or appendix material.
+    coverage, derivation targets, unresolved items, or appendix material.
 
     Parameters
     ----------
@@ -102,8 +146,12 @@ def render_family_discovery_report(
     coverage:
         Compact evidence showing which computed facets are explained by each
         family.
+    derivation_attempts:
+        Structured derivation attempts for facets that are not immediately
+        explained by existing families. These attempts should document residual,
+        coefficient-tightening, aggregation, c-MIR, mixed-MIR, or other routes.
     unmatched_facets:
-        Computed facets that are not yet explained by symbolic derivations.
+        Computed facets that remain unexplained after derivation attempts.
     proof_obligations:
         Remaining mathematical tasks.
     scope_notes:
@@ -113,6 +161,7 @@ def render_family_discovery_report(
     """
     normalized_families = [_as_family(family) for family in families]
     normalized_coverage = [_as_coverage(item) for item in coverage]
+    normalized_attempts = [_as_derivation_attempt(item) for item in derivation_attempts]
     normalized_unmatched = [_as_unmatched_facet(item) for item in unmatched_facets]
 
     lines = [
@@ -164,16 +213,27 @@ def render_family_discovery_report(
     )
     lines.extend(_render_coverage(normalized_coverage))
 
-    lines.extend(["", "## Unmatched computed facets", ""])
+    lines.extend(["", "## Derivation attempts for not-yet-covered facets", ""])
+    if normalized_attempts:
+        lines.append(
+            "The following derivation attempts record how computed facets were tested against residual, coefficient-tightening, aggregation, c-MIR, mixed-MIR, or related derivation patterns."
+        )
+        lines.append("")
+        for attempt in normalized_attempts:
+            lines.extend(_render_derivation_attempt(attempt))
+    else:
+        lines.append("No derivation attempts were reported.")
+
+    lines.extend(["", "## Unresolved computed facets", ""])
     if normalized_unmatched:
         lines.append(
-            "The following computed facets have not yet been explained by a symbolic derivation."
+            "The following computed facets remain unresolved after the derivation attempts above."
         )
         lines.append("")
         for facet in normalized_unmatched:
             lines.extend(_render_unmatched_facet(facet))
     else:
-        lines.append("No unmatched computed facets were reported.")
+        lines.append("No unresolved computed facets were reported.")
 
     lines.extend(["", "## Proof obligations", ""])
     if proof_obligations:
@@ -183,10 +243,11 @@ def render_family_discovery_report(
         lines.extend(
             [
                 "1. Prove validity of every symbolic inequality family for all admissible parameters.",
-                "2. For each derived family, record a complete aggregation, c-MIR, lifting, or bound-substitution certificate.",
-                "3. Determine the parameter regimes in which each family is facet-defining.",
-                "4. Check whether all computed nontrivial facets are covered by the reported symbolic families.",
-                "5. Do not claim a complete convex hull description until reverse inclusion is proved.",
+                "2. For each derived family, record a complete aggregation, c-MIR, lifting, mixing, or bound-substitution certificate.",
+                "3. For every successful derivation attempt, verify that the reconstructed inequality normalizes to the target concrete facet.",
+                "4. Determine the parameter regimes in which each family is facet-defining.",
+                "5. Check whether all computed nontrivial facets are covered by the reported symbolic families.",
+                "6. Do not claim a complete convex hull description until reverse inclusion is proved.",
             ]
         )
 
@@ -195,7 +256,7 @@ def render_family_discovery_report(
             "",
             "## Conclusion",
             "",
-            "The current output is a family-discovery report. It presents symbolic inequality families and their derivation status, using computed facets only as evidence. It does not by itself constitute a complete convex-hull description.",
+            "The current output is a family-discovery report. It presents symbolic inequality families and derivation attempts, using computed facets only as evidence. It does not by itself constitute a complete convex-hull description.",
         ]
     )
 
@@ -296,6 +357,79 @@ def _render_coverage(coverage: Sequence[CoverageSummary]) -> list[str]:
     return lines
 
 
+def _render_derivation_attempt(attempt: DerivationAttempt) -> list[str]:
+    lines = [
+        f"### Target facet: `{attempt.target_facet}`",
+        "",
+        f"- status: `{attempt.status}`",
+    ]
+
+    if attempt.symbolic_family:
+        lines.append(f"- symbolic family: {attempt.symbolic_family}")
+
+    if attempt.reconstructed_inequality:
+        lines.append(f"- reconstructed inequality: `{attempt.reconstructed_inequality}`")
+
+    if attempt.equality_check:
+        lines.append(f"- equality check: {attempt.equality_check}")
+
+    if attempt.failure_reason:
+        lines.append(f"- failure reason: {attempt.failure_reason}")
+
+    if attempt.parameter_conditions:
+        lines.extend(["", "#### Parameter conditions", ""])
+        for condition in attempt.parameter_conditions:
+            lines.append(f"- {condition}")
+
+    if attempt.source_constraints:
+        lines.extend(["", "#### Source constraints", ""])
+        for constraint in attempt.source_constraints:
+            lines.extend(_render_source_constraint(constraint))
+
+    if attempt.steps:
+        lines.extend(["", "#### Derivation steps", ""])
+        for step in attempt.steps:
+            lines.extend(_render_derivation_step(step))
+
+    if attempt.notes:
+        lines.extend(["", "#### Notes", ""])
+        for note in attempt.notes:
+            lines.append(f"- {note}")
+
+    lines.append("")
+    return lines
+
+
+def _render_source_constraint(constraint: SourceConstraint) -> list[str]:
+    lines = [
+        f"- {constraint.name}",
+        f"  - symbolic: {constraint.symbolic_form}",
+    ]
+
+    if constraint.concrete_form:
+        lines.append(f"  - concrete: `{constraint.concrete_form}`")
+
+    if constraint.notes:
+        lines.append(f"  - notes: {constraint.notes}")
+
+    return lines
+
+
+def _render_derivation_step(step: DerivationStep) -> list[str]:
+    lines = [f"- {step.method}: {step.description}"]
+
+    if step.expression:
+        lines.append(f"  - expression: {step.expression}")
+
+    if step.status:
+        lines.append(f"  - status: `{step.status}`")
+
+    if step.notes:
+        lines.append(f"  - notes: {step.notes}")
+
+    return lines
+
+
 def _render_unmatched_facet(facet: UnmatchedFacet) -> list[str]:
     lines = [f"- inequality: `{facet.inequality}`"]
     if facet.source:
@@ -316,12 +450,16 @@ def _as_family(value: InequalityFamily | Mapping) -> InequalityFamily:
         facetness_status=str(value.get("facetness_status", "unproved")),
         completeness_status=str(value.get("completeness_status", "not claimed")),
         conditions=tuple(str(item) for item in value.get("conditions", ())),
-        covered_facets=tuple(_as_concrete_facet(item) for item in value.get("covered_facets", ())),
+        covered_facets=tuple(
+            _as_concrete_facet(item) for item in value.get("covered_facets", ())
+        ),
         notes=tuple(str(item) for item in value.get("notes", ())),
     )
 
 
-def _as_concrete_facet(value: ConcreteFacetReference | str | Mapping) -> ConcreteFacetReference | str:
+def _as_concrete_facet(
+    value: ConcreteFacetReference | str | Mapping,
+) -> ConcreteFacetReference | str:
     if isinstance(value, ConcreteFacetReference | str):
         return value
 
@@ -341,6 +479,78 @@ def _as_coverage(value: CoverageSummary | Mapping) -> CoverageSummary:
         covered_facets=int(value.get("covered_facets", 0)),
         sources=tuple(str(item) for item in value.get("sources", ())),
         notes=str(value.get("notes", "")),
+    )
+
+
+def _as_derivation_attempt(
+    value: DerivationAttempt | Mapping,
+) -> DerivationAttempt:
+    if isinstance(value, DerivationAttempt):
+        return value
+
+    return DerivationAttempt(
+        target_facet=str(value["target_facet"]),
+        status=str(value["status"]),
+        source_constraints=tuple(
+            _as_source_constraint(item)
+            for item in value.get("source_constraints", ())
+        ),
+        steps=tuple(_as_derivation_step(item) for item in value.get("steps", ())),
+        symbolic_family=(
+            str(value["symbolic_family"])
+            if value.get("symbolic_family") is not None
+            else None
+        ),
+        parameter_conditions=tuple(
+            str(item) for item in value.get("parameter_conditions", ())
+        ),
+        reconstructed_inequality=(
+            str(value["reconstructed_inequality"])
+            if value.get("reconstructed_inequality") is not None
+            else None
+        ),
+        equality_check=(
+            str(value["equality_check"])
+            if value.get("equality_check") is not None
+            else None
+        ),
+        failure_reason=(
+            str(value["failure_reason"])
+            if value.get("failure_reason") is not None
+            else None
+        ),
+        notes=tuple(str(item) for item in value.get("notes", ())),
+    )
+
+
+def _as_source_constraint(value: SourceConstraint | Mapping) -> SourceConstraint:
+    if isinstance(value, SourceConstraint):
+        return value
+
+    return SourceConstraint(
+        name=str(value["name"]),
+        symbolic_form=str(value["symbolic_form"]),
+        concrete_form=(
+            str(value["concrete_form"])
+            if value.get("concrete_form") is not None
+            else None
+        ),
+        notes=str(value["notes"]) if value.get("notes") is not None else None,
+    )
+
+
+def _as_derivation_step(value: DerivationStep | Mapping) -> DerivationStep:
+    if isinstance(value, DerivationStep):
+        return value
+
+    return DerivationStep(
+        method=str(value["method"]),
+        description=str(value["description"]),
+        expression=str(value["expression"])
+        if value.get("expression") is not None
+        else None,
+        status=str(value["status"]) if value.get("status") is not None else None,
+        notes=str(value["notes"]) if value.get("notes") is not None else None,
     )
 
 
