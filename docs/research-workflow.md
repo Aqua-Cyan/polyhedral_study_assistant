@@ -18,8 +18,8 @@ For every nontrivial facet found in a small instance:
 A computed facet must not be reported as merely "unmatched" until the assistant has attempted:
 
 1. identify source constraints by support overlap;
-2. check whether it is a tightened form of one original constraint using binary upper bounds;
-3. check whether it is an aggregation of multiple original constraints;
-4. check whether c-MIR or mixed-integer rounding can produce it;
+2. check whether it is an aggregation of multiple original constraints with coefficient tightening;
+3. check whether c-MIR or mixed-integer rounding can produce it;
+4. check whether it can be obtained by more than one c-MIR patterns, e.g., mixing after residual.
 5. if a concrete derivation is found, generalize the same derivation to the symbolic model;
 6. only if all attempts fail, place it in the unresolved section with an explicit failure reason.

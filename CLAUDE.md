@@ -14,7 +14,7 @@ Never claim that a candidate inequality system is a complete convex hull descrip
 
 1. validity of all inequality families has been proved;
 2. completeness has been proved, typically by showing the candidate polyhedron is contained in the convex hull;
-3. tested PORTA facets are covered or all exceptions are explicitly reported;
+3. tested cddlib facets are covered or all exceptions are explicitly reported;
 4. all assumptions, parameter ranges, and boundary cases are stated.
 
 If only computational evidence is available, label the result as `experimentally supported` or `conjectural`.
@@ -27,20 +27,16 @@ For integer hull discovery tasks, follow this sequence:
 
 1. Formalize the integer set, variables, parameters, and relaxation.
 2. Generate small test instances.
-3. Compute or import PORTA facets.
+3. Enumerate integer points and compute facets by cddlib.
 4. Normalize all inequalities.
 5. Classify facets by support, coefficient pattern, and symmetry.
 6. Identify possible source constraints.
-7. Try to derive inequalities using aggregation and c-MIR.
+7. Try to derive inequalities using different c-MIR patterns.
 8. Generalize matched facets into parameterized candidate families.
 9. Run coverage checks on small instances.
 10. Record unresolved proof obligations.
 
-Computed facets are not the final output.
-
-For a parametric integer set, the final research output should be symbolic inequality families with derivations.
-
-A report that only lists instance-level facets is considered incomplete.
+Computed facets are not the final output. For a parametric integer set, the final research output should be symbolic inequality families with derivations. A report that only lists instance-level facets is considered incomplete.
 
 For every nontrivial computed facet, the assistant must attempt:
 
@@ -80,10 +76,9 @@ When a computed facet is not covered by an existing symbolic family, do not imme
 First perform a derivation attempt:
 
 1. Identify source constraints whose supports overlap the target facet.
-2. Try coefficient tightening using binary upper bounds.
-3. Try nonnegative aggregation of original constraints.
-4. Try c-MIR or c-MIR-style residualization.
-5. If the target facet is derived for the concrete instance, generalize the same derivation symbolically.
-6. Only after these attempts fail may the facet be reported as unresolved.
+2. Try nonnegative aggregation and coefficient tightening of original constraints.
+3. Try c-MIR or c-MIR-style residualization.
+4. If the target facet is derived for the concrete instance, generalize the same derivation symbolically.
+5. Only after these attempts fail may the facet be reported as unresolved.
 
 The report must include the derivation attempt, not just the unresolved inequality.

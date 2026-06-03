@@ -1,6 +1,6 @@
 ---
 name: integer-hull-discovery
-description: use this skill when analyzing integer linear sets, discovering convex hull descriptions, interpreting PORTA-generated facets, deriving valid inequalities with c-MIR, classifying facet families, or tracking proof obligations for integer hull descriptions.
+description: use this skill when analyzing integer linear sets, discovering convex hull descriptions, interpreting cddlib-generated facets, deriving valid inequalities with c-MIR, classifying facet families, or tracking proof obligations for integer hull descriptions.
 ---
 
 # Integer Hull Discovery
@@ -34,30 +34,38 @@ Use a staged research workflow. Treat computational evidence, valid inequality d
    - Include overlapping and non-overlapping index-set cases when relevant.
    - Include cases where parameters are tight, such as b = 1 or b = |J|.
 
-   When the user gives a parametric integer linear set but does not provide concrete instances, propose a small-instance generation plan. The plan should include random small instances and structured edge cases. Do not assume the user has already selected PORTA instances.
+   When the user gives a parametric integer linear set but does not provide concrete instances, propose a small-instance generation plan. The plan should include random small instances and structured edge cases. Do not assume the user has already selected cddlib instances.
 
-5. Analyze PORTA-generated facets.
+5. Analyze cddlib-generated facets.
    - Normalize every inequality.
    - Record support, coefficient pattern, right-hand side, and symmetry class.
    - Distinguish original constraints, variable bounds, and nontrivial inequalities.
 
 6. Search for derivations.
    - Identify source constraints involved in each facet.
-   - Try nonnegative aggregation of original constraints.
+   - Try nonnegative aggregation and coefficient tightening of original constraints.
    - Apply c-MIR or related mixed-integer rounding when appropriate.
    - Record the derivation as a certificate, not only as prose.
 
 7. Generalize.
-   - Turn repeated PORTA patterns into parameterized inequality families.
+   - Turn repeated patterns into parameterized inequality families.
    - State all index conditions and parameter ranges.
    - Specify whether the family is valid, conjectural, facet-defining, or complete.
 
 8. Verify.
-   - Check whether candidate families cover all tested PORTA facets.
+   - Check whether candidate families cover all tested cddlib facets.
    - Search for violated integer points or fractional counterexamples.
    - Record unmatched facets and unresolved cases.
 
-9. Prove or label honestly.
+9. Identify the unmatched facets.
+   - identify source constraints by support overlap;
+   - check whether it is an aggregation of multiple original constraints with coefficient tightening;
+   - check whether c-MIR or mixed-integer rounding can produce it;
+   - check if it can be obtained by more than one pattern in c-MIR patterns, e.g., mixing after residual;
+   - if a concrete derivation is found, generalize the same derivation to the symbolic model;
+   - only if all attempts fail, place it in the unresolved section with an explicit failure reason.
+
+10. Prove or label honestly.
    - Never call a description "the convex hull" unless completeness is proved.
    - If only small examples support it, label it "experimentally supported".
    - If validity is proved but completeness is not, say so explicitly.
@@ -69,7 +77,7 @@ Use these sections unless the user requests a different format:
 1. Problem formalization
 2. Assumptions and edge cases
 3. Small-instance plan
-4. PORTA facet analysis plan
+4. cddlib facet analysis plan
 5. Candidate inequality families
 6. c-MIR derivation attempts
 7. Verification status
@@ -79,7 +87,7 @@ Use these sections unless the user requests a different format:
 
 Use these labels carefully:
 
-- raw PORTA facet
+- raw cddlib facet
 - normalized
 - original constraint
 - variable bound
@@ -134,29 +142,3 @@ If no symbolic family is found, put the concrete facet in an "unmatched facets" 
 Organize research reports by inequality family, not by computational instance.
 
 Instance-level output belongs only in a compact evidence table or appendix. Do not list all variable bounds or all concrete inequalities in the main body unless the user explicitly asks for raw computational output.
-
-## Unmatched facet derivation protocol
-
-A computed facet must not be reported as merely "unmatched" until the assistant has attempted:
-
-1. identify source constraints by support overlap;
-2. check whether it is a tightened form of one original constraint using binary upper bounds;
-3. check whether it is an aggregation of multiple original constraints;
-4. check whether c-MIR or mixed-integer rounding can produce it;
-5. if a concrete derivation is found, generalize the same derivation to the symbolic model;
-6. only if all attempts fail, place it in the unresolved section with an explicit failure reason.
-
-## Do not stop at unmatched facets
-
-When a computed facet is not covered by an existing symbolic family, do not immediately report it as unmatched.
-
-First perform a derivation attempt:
-
-1. Identify source constraints whose supports overlap the target facet.
-2. Try coefficient tightening using binary upper bounds.
-3. Try nonnegative aggregation of original constraints.
-4. Try c-MIR or c-MIR-style residualization.
-5. If the target facet is derived for the concrete instance, generalize the same derivation symbolically.
-6. Only after these attempts fail may the facet be reported as unresolved.
-
-The report must include the derivation attempt, not just the unresolved inequality.

@@ -19,4 +19,4 @@ reports/tmp/
 *.poi
 *.ieq
 *.traf
-*.out
+*.out.claude/
