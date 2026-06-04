@@ -48,6 +48,76 @@ For every nontrivial computed facet, the assistant must attempt:
 
 Only unmatched facets may remain as concrete instance-level inequalities.
 
+## Candidate family validation pipeline
+
+When studying a parametric integer set, computed facets are evidence, not final mathematical output.
+
+The required pipeline is:
+
+computed cdd facets -> facet normalization -> candidate family proposal -> Gate 1: instantiation matching -> Gate 2: finite validity check -> Gate 3: derivation certificate check -> family-first report.
+
+Gate 1: instantiation matching
+
+A symbolic family may not claim to cover a computed facet unless the following check is performed:
+
+instantiate the symbolic family on the concrete test instance and chosen family parameters;
+generate the concrete LinearInequality;
+normalize the instantiated inequality;
+normalize the computed cdd facet;
+check exact equality.
+
+Do not count a facet as covered by visual similarity or informal pattern resemblance. If exact normalized equality fails, the facet is not covered by that family.
+
+Gate 2: finite validity check
+
+Every candidate family instance must be checked on all enumerated feasible 0-1 points of the corresponding small instance.
+
+If a feasible point violates the instantiated inequality, the family instance must be placed in Invalidated candidate families.
+
+The report must include:
+
+concrete instance;
+family parameter values;
+instantiated inequality;
+violating feasible point;
+violation value if available.
+
+An invalidated family must not appear as a derived or proved family.
+
+Gate 3: derivation certificate check
+
+A candidate family may be reported as derived or proved valid only if it has a derivation certificate using documented patterns, such as:
+
+residual inequality;
+coefficient tightening;
+aggregation;
+c-MIR;
+mixed MIR;
+sequential MIR or MIR applied after MIR.
+
+The certificate must record:
+
+source constraints;
+substitutions or bounds used;
+intermediate inequalities;
+rounding, MIR, or mixing step if used;
+final symbolic inequality;
+equality check between reconstructed inequality and the computed facet when claiming coverage.
+
+A family that passes finite tests but lacks a derivation certificate must be labeled as candidate, not proved valid.
+
+Candidate refinement loop:
+
+For every proposed candidate family:
+
+instantiate it on all tested small instances;
+check exact matching against cdd facets;
+check finite validity on all enumerated feasible 0-1 points;
+if invalid, produce a counterexample and ask how to refine the conditions;
+if valid on tests but no derivation exists, keep it in Candidate symbolic inequality families;
+try to derive it using the documented c-MIR patterns;
+only after a derivation certificate exists may it move to Derived or proved symbolic inequality families.
+
 ## Coding rules
 
 Use Python for the initial harness.

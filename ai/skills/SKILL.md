@@ -108,6 +108,78 @@ Never claim that a system of inequalities gives the convex hull unless both incl
 
 If the reverse inclusion is missing, state the missing proof obligation explicitly.
 
+## Candidate family validation gate
+
+When analyzing convex hulls of parametric integer linear sets, do not move directly from computed facets to a claimed symbolic family.
+
+Use this pipeline:
+
+computed facets
+-> normalize facets
+-> propose candidate symbolic family
+-> instantiate family on concrete test instances
+-> check exact matching against computed facets
+-> check finite validity on enumerated feasible integer points
+-> require a derivation certificate
+-> write the family-first report
+Exact matching requirement
+
+A computed facet is covered by a symbolic family only if:
+
+the family is instantiated with explicit parameter values;
+the instantiated inequality is normalized;
+the computed facet is normalized;
+the two normalized inequalities are exactly equal.
+
+Do not report coverage based only on visual similarity or coefficient resemblance.
+
+Finite validity requirement:
+
+Every candidate family instance must be checked against all enumerated feasible integer points in the tested small instance.
+
+If a violating point is found, report the candidate as invalidated and include:
+
+tested instance;
+family parameter values;
+instantiated inequality;
+violating point;
+violation value or violated side.
+
+Invalidated candidates must not appear as proved or derived families.
+
+Derivation certificate requirement:
+
+A family can be labeled proved valid or derived only if it has a derivation certificate.
+
+The certificate must use one or more documented derivation patterns:
+
+residual inequality;
+coefficient tightening;
+aggregation;
+c-MIR;
+mixed MIR;
+sequential MIR or MIR applied after MIR.
+
+The certificate must include:
+
+source constraints;
+intermediate inequalities;
+bound substitutions;
+rounding or mixing step when used;
+final symbolic inequality;
+parameter conditions;
+equality check against computed facets when claiming coverage.
+Candidate status rule
+
+Use these statuses carefully:
+
+derived/proved valid: exact matching, finite validity, and derivation certificate are all available.
+candidate: finite tests may support the family, but a derivation certificate is missing.
+invalidated: a tested feasible point violates an instantiated inequality.
+unresolved: no valid family or derivation attempt currently explains the facet.
+
+A family that passes finite tests but lacks a derivation certificate must remain a candidate. A family that fails finite validity must be reported as invalidated with a counterexample.
+
 ## Computational backend rule
 
 For small 0-1 instances, the assistant may use the project harness to enumerate feasible binary points and then compute the convex hull inequalities using the configured polyhedral backend.

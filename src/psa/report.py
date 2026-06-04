@@ -64,7 +64,11 @@ class DerivationAttempt:
 
 @dataclass(frozen=True)
 class InequalityFamily:
-    """A symbolic inequality family discovered from computed facets."""
+    """A symbolic inequality family with a derivation certificate.
+
+    Use this only for families that are claimed to be derived or proved valid.
+    If a family is only a conjecture, put it in CandidateInequalityFamily.
+    """
 
     name: str
     statement: str
@@ -74,6 +78,50 @@ class InequalityFamily:
     completeness_status: str = "not claimed"
     conditions: Sequence[str] = field(default_factory=tuple)
     covered_facets: Sequence[ConcreteFacetReference | str] = field(default_factory=tuple)
+    notes: Sequence[str] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class CandidateInequalityFamily:
+    """A symbolic family that has not yet passed the derivation gate.
+
+    Use this for families that may be useful conjectures, or that passed some
+    finite tests, but do not yet have a valid derivation certificate.
+    """
+
+    name: str
+    statement: str
+    candidate_status: str
+    reason_not_derived: str
+    finite_validity_status: str = "unchecked"
+    exact_matching_status: str = "unchecked"
+    derivation_status: str = "missing"
+    conditions: Sequence[str] = field(default_factory=tuple)
+    evidence: Sequence[ConcreteFacetReference | str] = field(default_factory=tuple)
+    next_actions: Sequence[str] = field(default_factory=tuple)
+    notes: Sequence[str] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True)
+class InvalidatedFamilyCounterexample:
+    """A counterexample invalidating one candidate family instance."""
+
+    source: str
+    parameter: str
+    inequality: str
+    violating_point: str
+    violation_value: str | None = None
+    notes: str | None = None
+
+
+@dataclass(frozen=True)
+class InvalidatedInequalityFamily:
+    """A candidate family disproved by finite feasible-point checking."""
+
+    name: str
+    statement: str
+    reason: str
+    counterexamples: Sequence[InvalidatedFamilyCounterexample | str]
     notes: Sequence[str] = field(default_factory=tuple)
 
 
@@ -121,7 +169,9 @@ def render_family_discovery_report(
     *,
     title: str,
     model_description: str,
-    families: Sequence[InequalityFamily | Mapping],
+    families: Sequence[InequalityFamily | Mapping] = (),
+    candidate_families: Sequence[CandidateInequalityFamily | Mapping] = (),
+    invalidated_families: Sequence[InvalidatedInequalityFamily | Mapping] = (),
     coverage: Sequence[CoverageSummary | Mapping] = (),
     derivation_attempts: Sequence[DerivationAttempt | Mapping] = (),
     unmatched_facets: Sequence[UnmatchedFacet | Mapping] = (),
@@ -132,34 +182,29 @@ def render_family_discovery_report(
     """Render a family-first discovery report.
 
     The report is organized by symbolic inequality families rather than by
-    computational instances. Concrete facets may appear only as evidence,
-    coverage, derivation targets, unresolved items, or appendix material.
+    computational instances.
 
-    Parameters
-    ----------
-    title:
-        Report title.
-    model_description:
-        General mathematical description of the studied set or model.
-    families:
-        Symbolic inequality families with derivations and status labels.
-    coverage:
-        Compact evidence showing which computed facets are explained by each
-        family.
-    derivation_attempts:
-        Structured derivation attempts for facets that are not immediately
-        explained by existing families. These attempts should document residual,
-        coefficient-tightening, aggregation, c-MIR, mixed-MIR, or other routes.
-    unmatched_facets:
-        Computed facets that remain unexplained after derivation attempts.
-    proof_obligations:
-        Remaining mathematical tasks.
-    scope_notes:
-        Optional limitations or methodological notes.
-    appendix:
-        Optional appendix lines. Use this for raw computational evidence only.
+    Important reporting policy
+    --------------------------
+    A proposed family belongs in `families` only if it has passed:
+
+    1. exact instantiation matching against computed facets when coverage is claimed;
+    2. finite validity checking on enumerated feasible points;
+    3. derivation certificate checking using documented patterns.
+
+    If a family passes finite tests but has no derivation certificate, it
+    belongs in `candidate_families`.
+
+    If a family is invalidated by a feasible point, it belongs in
+    `invalidated_families`.
     """
     normalized_families = [_as_family(family) for family in families]
+    normalized_candidates = [
+        _as_candidate_family(family) for family in candidate_families
+    ]
+    normalized_invalidated = [
+        _as_invalidated_family(family) for family in invalidated_families
+    ]
     normalized_coverage = [_as_coverage(item) for item in coverage]
     normalized_attempts = [_as_derivation_attempt(item) for item in derivation_attempts]
     normalized_unmatched = [_as_unmatched_facet(item) for item in unmatched_facets]
@@ -180,6 +225,9 @@ def render_family_discovery_report(
                 "- This report uses computed facets as evidence for symbolic inequality families.",
                 "- Concrete instance-level inequalities are not treated as the final output.",
                 "- No complete convex-hull description is claimed unless a reverse-inclusion proof is provided.",
+                "- A family is reported as derived/proved only after exact matching, finite validity checking, and derivation-certificate checking.",
+                "- Candidate families without derivation certificates are separated from proved or derived families.",
+                "- Invalidated candidate families are reported with counterexamples.",
             ]
         )
 
@@ -190,7 +238,10 @@ def render_family_discovery_report(
             "",
             model_description.strip(),
             "",
-            "## Derived symbolic inequality families",
+            "## Derived or proved symbolic inequality families",
+            "",
+            "Families in this section have passed the derivation-certificate gate. "
+            "When coverage is claimed, the concrete facets must be exactly reproduced by instantiating the symbolic family and normalizing the resulting inequality.",
             "",
         ]
     )
@@ -199,7 +250,41 @@ def render_family_discovery_report(
         for family in normalized_families:
             lines.extend(_render_family(family))
     else:
-        lines.append("No symbolic inequality family has been derived yet.")
+        lines.append("No derived or proved symbolic inequality family has been reported.")
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Candidate symbolic inequality families",
+            "",
+            "Families in this section may be useful conjectures or experimentally promising templates, "
+            "but they are not reported as proved valid. A candidate family must be refined, proved, or invalidated before it can be used as a final mathematical conclusion.",
+            "",
+        ]
+    )
+
+    if normalized_candidates:
+        for family in normalized_candidates:
+            lines.extend(_render_candidate_family(family))
+    else:
+        lines.append("No candidate symbolic inequality family was reported.")
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Invalidated candidate families",
+            "",
+            "Families in this section were rejected by finite feasible-point checking or by failed exact-instantiation checks.",
+            "Invalidated families should be used to refine the next candidate family proposal.",
+            "",
+        ]
+    )
+
+    if normalized_invalidated:
+        for family in normalized_invalidated:
+            lines.extend(_render_invalidated_family(family))
+    else:
+        lines.append("No invalidated candidate family was reported.")
         lines.append("")
 
     lines.extend(
@@ -207,6 +292,7 @@ def render_family_discovery_report(
             "## Coverage of computed facets",
             "",
             "This section records computational evidence showing which concrete facets are explained by the symbolic families above.",
+            "Coverage must be based on exact instantiation and normalization, not on visual similarity.",
             "It is not a proof of completeness.",
             "",
         ]
@@ -242,12 +328,14 @@ def render_family_discovery_report(
     else:
         lines.extend(
             [
-                "1. Prove validity of every symbolic inequality family for all admissible parameters.",
+                "1. Prove validity of every derived symbolic inequality family for all admissible parameters.",
                 "2. For each derived family, record a complete aggregation, c-MIR, lifting, mixing, or bound-substitution certificate.",
-                "3. For every successful derivation attempt, verify that the reconstructed inequality normalizes to the target concrete facet.",
-                "4. Determine the parameter regimes in which each family is facet-defining.",
-                "5. Check whether all computed nontrivial facets are covered by the reported symbolic families.",
-                "6. Do not claim a complete convex hull description until reverse inclusion is proved.",
+                "3. For every claimed coverage item, verify that the instantiated symbolic inequality normalizes exactly to the computed facet.",
+                "4. For every candidate family, run finite validity checks on all enumerated feasible points in the tested instances.",
+                "5. If a candidate family is invalidated, record a concrete counterexample and refine the candidate conditions.",
+                "6. If a candidate family passes finite checks but lacks a derivation certificate, keep it in the candidate section and try to derive it using documented c-MIR patterns.",
+                "7. Determine the parameter regimes in which each valid family is facet-defining.",
+                "8. Do not claim a complete convex hull description until reverse inclusion is proved.",
             ]
         )
 
@@ -256,7 +344,7 @@ def render_family_discovery_report(
             "",
             "## Conclusion",
             "",
-            "The current output is a family-discovery report. It presents symbolic inequality families and derivation attempts, using computed facets only as evidence. It does not by itself constitute a complete convex-hull description.",
+            "The current output is a family-discovery report. It separates derived families, candidate families, invalidated families, and unresolved computed facets. It does not by itself constitute a complete convex-hull description.",
         ]
     )
 
@@ -317,6 +405,109 @@ def _render_family(family: InequalityFamily) -> list[str]:
         for note in family.notes:
             lines.append(f"- {note}")
         lines.append("")
+
+    return lines
+
+
+def _render_candidate_family(family: CandidateInequalityFamily) -> list[str]:
+    lines = [
+        f"### {family.name}",
+        "",
+        "#### Candidate statement",
+        "",
+        family.statement.strip(),
+        "",
+    ]
+
+    if family.conditions:
+        lines.extend(["#### Candidate conditions", ""])
+        for condition in family.conditions:
+            lines.append(f"- {condition}")
+        lines.append("")
+
+    lines.extend(
+        [
+            "#### Gate status",
+            "",
+            f"- candidate status: `{family.candidate_status}`",
+            f"- exact matching: `{family.exact_matching_status}`",
+            f"- finite validity: `{family.finite_validity_status}`",
+            f"- derivation: `{family.derivation_status}`",
+            "",
+            "#### Why this is not reported as derived",
+            "",
+            family.reason_not_derived.strip(),
+            "",
+        ]
+    )
+
+    if family.evidence:
+        lines.extend(["#### Evidence", ""])
+        for item in family.evidence:
+            lines.extend(_render_concrete_facet_reference(item))
+        lines.append("")
+
+    if family.next_actions:
+        lines.extend(["#### Next actions", ""])
+        for action in family.next_actions:
+            lines.append(f"- {action}")
+        lines.append("")
+
+    if family.notes:
+        lines.extend(["#### Notes", ""])
+        for note in family.notes:
+            lines.append(f"- {note}")
+        lines.append("")
+
+    return lines
+
+
+def _render_invalidated_family(family: InvalidatedInequalityFamily) -> list[str]:
+    lines = [
+        f"### {family.name}",
+        "",
+        "#### Invalidated statement",
+        "",
+        family.statement.strip(),
+        "",
+        "#### Reason",
+        "",
+        family.reason.strip(),
+        "",
+        "#### Counterexamples",
+        "",
+    ]
+
+    for counterexample in family.counterexamples:
+        lines.extend(_render_counterexample(counterexample))
+
+    if family.notes:
+        lines.extend(["#### Notes", ""])
+        for note in family.notes:
+            lines.append(f"- {note}")
+        lines.append("")
+
+    return lines
+
+
+def _render_counterexample(
+    counterexample: InvalidatedFamilyCounterexample | str,
+) -> list[str]:
+    if isinstance(counterexample, str):
+        return [f"- {counterexample}"]
+
+    lines = [
+        f"- source: {counterexample.source}",
+        f"  - parameter: {counterexample.parameter}",
+        f"  - inequality: `{counterexample.inequality}`",
+        f"  - violating point: `{counterexample.violating_point}`",
+    ]
+
+    if counterexample.violation_value is not None:
+        lines.append(f"  - violation value: `{counterexample.violation_value}`")
+
+    if counterexample.notes:
+        lines.append(f"  - notes: {counterexample.notes}")
 
     return lines
 
@@ -457,10 +648,74 @@ def _as_family(value: InequalityFamily | Mapping) -> InequalityFamily:
     )
 
 
+def _as_candidate_family(
+    value: CandidateInequalityFamily | Mapping,
+) -> CandidateInequalityFamily:
+    if isinstance(value, CandidateInequalityFamily):
+        return value
+
+    return CandidateInequalityFamily(
+        name=str(value["name"]),
+        statement=str(value["statement"]),
+        candidate_status=str(value.get("candidate_status", "candidate")),
+        reason_not_derived=str(value["reason_not_derived"]),
+        finite_validity_status=str(value.get("finite_validity_status", "unchecked")),
+        exact_matching_status=str(value.get("exact_matching_status", "unchecked")),
+        derivation_status=str(value.get("derivation_status", "missing")),
+        conditions=tuple(str(item) for item in value.get("conditions", ())),
+        evidence=tuple(_as_concrete_facet(item) for item in value.get("evidence", ())),
+        next_actions=tuple(str(item) for item in value.get("next_actions", ())),
+        notes=tuple(str(item) for item in value.get("notes", ())),
+    )
+
+
+def _as_invalidated_family(
+    value: InvalidatedInequalityFamily | Mapping,
+) -> InvalidatedInequalityFamily:
+    if isinstance(value, InvalidatedInequalityFamily):
+        return value
+
+    return InvalidatedInequalityFamily(
+        name=str(value["name"]),
+        statement=str(value["statement"]),
+        reason=str(value["reason"]),
+        counterexamples=tuple(
+            _as_counterexample(item) for item in value.get("counterexamples", ())
+        ),
+        notes=tuple(str(item) for item in value.get("notes", ())),
+    )
+
+
+def _as_counterexample(
+    value: InvalidatedFamilyCounterexample | str | Mapping,
+) -> InvalidatedFamilyCounterexample | str:
+    if isinstance(value, InvalidatedFamilyCounterexample):
+        return value
+
+    if isinstance(value, str):
+        return value
+
+    return InvalidatedFamilyCounterexample(
+        source=str(value["source"]),
+        parameter=str(value["parameter"]),
+        inequality=str(value["inequality"]),
+        violating_point=str(value["violating_point"]),
+        violation_value=(
+            str(value["violation_value"])
+            if value.get("violation_value") is not None
+            else None
+        ),
+        notes=str(value["notes"]) if value.get("notes") is not None else None,
+    )
+
+
 def _as_concrete_facet(
     value: ConcreteFacetReference | str | Mapping,
 ) -> ConcreteFacetReference | str:
-    if isinstance(value, ConcreteFacetReference | str):
+    if isinstance(value, ConcreteFacetReference):
+        return value
+
+    if isinstance(value, str):
         return value
 
     return ConcreteFacetReference(
