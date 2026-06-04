@@ -277,7 +277,9 @@ For every proposed candidate family:
 8. only after a derivation certificate exists may it move to `Derived or proved symbolic inequality families`;
 9. rerun the report after each refinement.
 
-Do not stop immediately after invalidating a candidate. Invalidated candidates are useful: they show which conditions are missing.
+Do not stop immediately after invalidating a candidate. Invalidated candidates are useful: they show which conditions are missing. 
+
+A failed direct derivation is not a failed derivation. The assistant must try derived-row reuse: first derive intermediate valid inequalities, then use them as new source rows for further residual, tightening, c-MIR, mixed-MIR, or MIR-after-MIR attempts.
 
 ## No unsupported residual summation
 

@@ -529,3 +529,109 @@ Computed facets should appear only as:
 * appendix data.
 
 A concrete facet must not be labeled merely as "unmatched" until the residual, coefficient-tightening, and mixed MIR derivation attempts have been documented.
+
+## MIR-over-MIR and derived-row reuse
+
+Many useful inequalities are not obtained by applying a single pattern directly to the original constraints.
+
+A derivation may require several rounds. In such cases, every valid inequality produced in an earlier round may be reused as a new source row in a later round.
+
+This is called here **MIR-over-MIR** or **derived-row reuse**.
+
+### General principle
+
+If a row (R) is valid for the integer set and has a valid derivation certificate, then (R) may be used as a source row in a later derivation attempt.
+
+For example:
+
+```text
+original row
+→ residual inequality
+→ relaxed residual inequality on a larger support
+→ mixed MIR with another residual inequality
+→ coefficient tightening
+→ target facet
+```
+
+The intermediate row does not need to be facet-defining. Validity is enough.
+
+### Common MIR-over-MIR routes
+
+#### Route F: residual rows as mixed-MIR base rows
+
+1. Start from multiple activation constraints.
+2. Derive residual inequalities from each one.
+3. If necessary, relax the left-hand sides to a common support.
+4. Treat the resulting residual inequalities as new base rows.
+5. Apply mixed MIR, aggregation+c-MIR, or coefficient tightening.
+6. Compare the final inequality with the computed target facet.
+
+This route is especially useful when a target facet has one common (x)-support and multiple activation variables.
+
+#### Route G: residual then support relaxation
+
+Suppose a source row gives
+
+[
+x(D\cap J)\ge r y.
+]
+
+If (D\cap J\subseteq D) and (x\ge 0), then
+
+[
+x(D)\ge x(D\cap J)\ge r y.
+]
+
+Thus one can derive the relaxed row
+
+[
+x(D)\ge r y.
+]
+
+This relaxed row may be weaker than the original residual inequality, but it can become useful because several relaxed rows may now have a common left-hand side.
+
+#### Route H: derived row then coefficient tightening
+
+If an intermediate row has the right variables but weak coefficients, try coefficient tightening. Record both the pre-tightening and post-tightening forms.
+
+#### Route I: mixed MIR then further MIR
+
+If mixed MIR produces a valid inequality that still does not match the computed facet, treat it as an intermediate valid row and try applying another MIR or tightening step.
+
+### Search guidance for the assistant
+
+When a computed facet is not matched:
+
+1. Do not only try patterns on the original constraints.
+2. Generate intermediate valid inequalities using residual, tightening, aggregation, or mixed MIR.
+3. Add those intermediate inequalities to the source-row pool.
+4. Retry the derivation patterns using this expanded source-row pool.
+5. Continue for a small bounded depth, such as depth 2 or depth 3, before declaring the facet unresolved.
+
+### Required certificate for MIR-over-MIR
+
+A MIR-over-MIR derivation must list each stage:
+
+```text
+Stage 0: original source constraints
+Stage 1: first derived valid inequality
+Stage 2: second derived valid inequality
+...
+Final stage: target inequality
+```
+
+For each stage, record:
+
+* derivation pattern used;
+* source rows used;
+* formula before simplification;
+* formula after simplification;
+* validity justification;
+* whether the final row exactly matches the computed facet.
+
+A broad symbolic family discovered through MIR-over-MIR must still pass:
+
+1. exact instantiation matching;
+2. finite validity checking;
+3. derivation certificate checking.
+

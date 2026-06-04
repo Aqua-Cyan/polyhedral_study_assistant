@@ -315,3 +315,61 @@ Continue the refinement loop unless:
 3. all candidate families are either promoted, invalidated, or explicitly left as candidates with next actions;
 4. a blocker is reported;
 5. the user asks to stop.
+
+## Problem-specific adapter generation
+
+When the user provides a new problem definition under `examples/<problem>/README.md`, do not assume the generic harness already knows the model semantics. Create a thin problem-specific adapter layer under `examples/<problem>/` when needed.
+
+Recommended structure:
+
+```text
+examples/<problem>/
+  README.md
+  model.py
+  families.py
+  derive.py
+  study.py
+
+Allowed responsibilities:
+
+model.py: parse or represent concrete instances, define variable order, feasibility predicate, source constraints, and translation back to the user's notation.
+families.py: define problem-specific symbolic or candidate inequality families that implement parameter enumeration and instantiation.
+derive.py: identify source constraints for a computed facet and call the generic c-MIR attemptor. It may add problem-specific derivation attempts, but must not label heuristic matches as proved.
+study.py: orchestrate instance generation, cdd facet computation, family validation gates, derivation attempts, and report generation.
+
+Forbidden responsibilities:
+
+Do not reimplement cdd backend calls if psa.backends.cdd already provides them.
+Do not reimplement inequality normalization.
+Do not reimplement finite validity checking.
+Do not reimplement exact matching.
+Do not reimplement report rendering.
+Do not move problem-specific logic into src/psa/ unless it is genuinely reusable across models.
+
+A problem-specific adapter is a bridge between the mathematical model and the generic harness. It is not a second harness.
+
+Every adapter must use the generic pipeline:
+
+computed facets -> source-constraint identification -> generic c-MIR attempts -> problem-specific attempts if needed -> family proposal -> instantiation matching -> finite validity check -> derivation certificate check -> family-first report
+```
+
+## MIR-over-MIR rule
+
+When direct derivation from original constraints fails, do not stop.
+
+A valid inequality derived in an earlier step may be used as a new source row in a later step. This includes residual inequalities, coefficient-tightened inequalities, aggregation+c-MIR inequalities, and mixed-MIR inequalities.
+
+For every unresolved facet, try small-depth derivation chains such as:
+
+```text
+original row
+→ residual row
+→ relaxed residual row
+→ mixed MIR or aggregation+c-MIR
+→ coefficient tightening
+→ target facet
+```
+
+The assistant must document each intermediate row and its validity reason.
+
+The generic c-MIR attemptor is only a scaffold. If it returns `needs_problem_specific_derivation`, continue with mathematical reasoning using the documented c-MIR patterns. Do not treat a failed generic attempt as proof that the facet cannot be derived. A failed direct derivation is not a failed derivation. The assistant must try derived-row reuse: first derive intermediate valid inequalities, then use them as new source rows for further residual, tightening, c-MIR, mixed-MIR, or MIR-after-MIR attempts.
