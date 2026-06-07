@@ -352,3 +352,118 @@ A research run may stop only when one of the following holds:
 5. the user asks to stop.
 
 If none of these holds, continue the loop.
+
+## Instance scaling plan
+
+Small instances are used to discover patterns, but tiny instances can cause overfitting.
+
+Every study should use a staged instance plan.
+
+### Stage 1: sanity instances
+
+Use the smallest cases only to test:
+
+- variable ordering;
+- feasibility enumeration;
+- cddlib backend;
+- normalization;
+- report generation.
+
+Do not infer final symbolic families from this stage alone.
+
+### Stage 2: structured small instances
+
+Generate instances that isolate structural cases:
+
+- disjoint sets;
+- one-element overlap;
+- larger overlap;
+- nested sets;
+- identical sets;
+- boundary thresholds;
+- asymmetric thresholds.
+
+### Stage 3: medium generalization instances
+
+Increase sizes enough to distinguish different support patterns.
+
+For 0-1 problems, this means including cases where possible supports include:
+
+- singleton subsets;
+- pairs;
+- triples;
+- proper subsets;
+- full support.
+
+For two-set models, include cases where each of the regions
+
+\[
+J_1\setminus J_2,\quad J_1\cap J_2,\quad J_2\setminus J_1
+\]
+
+can have size 0, 1, and at least 2 when feasible.
+
+### Stage 4: random or exhaustive sweep
+
+Within computational limits, run either:
+
+- exhaustive sweeps over small-to-medium parameters; or
+- random sampled instances with fixed seed.
+
+Use this stage to test proposed families, find counterexamples, and discover missing facets.
+
+### Rule
+
+A symbolic family supported only by tiny cases must be labeled as a local candidate. It should not be promoted unless it passes derivation and validation gates.
+
+## Family compression pass
+
+After candidate families are generated, run a family-compression pass before final reporting.
+
+The goal is to avoid a long list of ad hoc inequalities that only fit the tested examples.
+
+### Compression procedure
+
+1. Collect all candidate and derived families.
+2. Group them by:
+   - source constraints;
+   - support pattern;
+   - coefficient pattern;
+   - right-hand side pattern;
+   - derivation route;
+   - parameter regime.
+3. Ask whether several families are special cases of a broader family.
+4. Propose a general symbolic family using arbitrary subsets and parameter expressions.
+5. Instantiate the general family on all tested instances.
+6. Check exact matching against computed facets.
+7. Check finite validity on enumerated feasible points.
+8. Attempt a c-MIR derivation certificate.
+9. If successful, replace narrow families with the general family and list narrow cases as examples.
+10. If unsuccessful, keep the narrow families but record why generalization failed.
+
+### Warning signs of over-specialization
+
+A family is probably too narrow if:
+
+- it mentions fixed variable names;
+- it mentions a concrete tested instance size;
+- it only covers one facet;
+- it differs from another family only by replacing one subset with another;
+- it has no source-constraint explanation;
+- it cannot be expressed using original model notation.
+
+### Preferred report style
+
+Prefer:
+
+\[
+x(D)\ge (b-|J\setminus D|)y,\quad D\subseteq J
+\]
+
+over separate families such as:
+
+\[
+x_i\ge y,\quad x_i+x_j\ge y,\quad x_i+x_j+x_k\ge 2y.
+\]
+
+The latter should appear as special cases, not as separate unrelated families, whenever a common derivation exists.

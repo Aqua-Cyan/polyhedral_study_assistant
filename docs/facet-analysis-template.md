@@ -560,14 +560,44 @@ The generic c-MIR attemptor is only a scaffold. If it returns `needs_problem_spe
 
 Unresolved means:
 
-```text
 all relevant residual, tightening, aggregation+c-MIR, mixed-MIR,
 and MIR-over-MIR chains were attempted and documented.
-```
 
 It does not mean:
 
-```text
 the first direct residual or aggregation attempt failed.
-```
 
+## From facet signatures to general families
+
+Facet signatures are not final families.
+
+When several facets share a signature, the assistant must attempt to identify a general family.
+
+For each group of similar facets:
+
+1. list the common source constraints;
+2. identify the varying supports;
+3. express the support using a symbolic subset such as \(D\);
+4. express missing variables using complements such as \(J\setminus D\);
+5. express coefficients using parameter formulas such as \(b-|J\setminus D|\);
+6. test whether the general formula instantiates back to the concrete facets;
+7. check finite validity;
+8. attempt a derivation certificate.
+
+Do not create separate families for each support size if a single subset-parameterized family explains them.
+
+## Larger-instance pressure test
+
+If a proposed family is based only on tiny instances, run larger or more varied instances before reporting it as stable.
+
+The pressure test should include:
+
+- larger supports;
+- proper subsets of different sizes;
+- asymmetric thresholds;
+- overlap regions of size at least 2 when applicable;
+- nested and identical cases.
+
+If the family fails, record the counterexample and refine the parameter conditions.
+
+If it survives but lacks a derivation, keep it as a candidate.

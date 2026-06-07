@@ -537,3 +537,41 @@ In particular:
 * validity does not imply facetness;
 * facet coverage does not imply complete hull;
 * candidate does not mean proved valid.
+
+## Family compression requirement
+
+Before producing the final report, the assistant must perform a family-compression pass.
+
+If many similar candidate families appear, the report must not simply list them one by one. Instead, it must attempt to identify a common parameterized family.
+
+The report should include a subsection:
+
+## Family compression pass
+
+### Candidate groups considered
+
+### Proposed generalizations
+
+### Validation results for generalizations
+
+### Narrow families retained and why
+
+For every proposed generalization, report:
+
+which narrower families it subsumes;
+exact matching results;
+finite validity results;
+derivation certificate status;
+counterexamples if invalid.
+
+If a generalization fails, keep the narrower families only if they are individually valid or useful as local candidates.
+
+A report is incomplete if it contains many similar local candidate families but no compression attempt.
+
+## Local candidate warning
+
+A candidate family that covers only one instance or one facet must be labeled `local candidate`.
+
+A local candidate may not be promoted to derived/proved status unless it has a derivation certificate.
+
+If multiple local candidates share the same form, attempt to merge them into a general family before finalizing the report.

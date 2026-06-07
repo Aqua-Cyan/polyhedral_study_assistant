@@ -373,3 +373,62 @@ original row
 The assistant must document each intermediate row and its validity reason.
 
 The generic c-MIR attemptor is only a scaffold. If it returns `needs_problem_specific_derivation`, continue with mathematical reasoning using the documented c-MIR patterns. Do not treat a failed generic attempt as proof that the facet cannot be derived. A failed direct derivation is not a failed derivation. The assistant must try derived-row reuse: first derive intermediate valid inequalities, then use them as new source rows for further residual, tightening, c-MIR, mixed-MIR, or MIR-after-MIR attempts.
+
+### Instance scaling requirement
+
+Do not rely only on tiny examples.
+
+Use a staged instance plan:
+
+1. tiny instances for debugging;
+2. small structured instances for first pattern discovery;
+3. medium structured instances for generalization testing;
+4. random or exhaustive sweeps within feasible enumeration limits.
+
+For 0-1 sets, choose instances large enough to distinguish singleton, pair, proper-subset, and full-support inequalities.
+
+For two-set models, include disjoint, overlap, nested, and identical cases. When feasible, include \(|J_1\cup J_2|\ge 4\), \(|J_1\cup J_2|\ge 5\), and asymmetric threshold cases.
+
+If computation becomes expensive, report the bottleneck and switch to targeted structured cases rather than only using tiny examples.
+
+## Family generalization and compression
+
+Do not produce many ad hoc families that only cover the current small examples.
+
+After candidate families are proposed, perform a compression pass:
+
+1. group candidates by source constraints;
+2. group by support pattern;
+3. group by coefficient pattern;
+4. group by c-MIR derivation route;
+5. search for a common parameterized family containing several candidates as special cases.
+
+If a more general family is proposed, it must still pass:
+
+- exact instantiation matching;
+- finite validity checking;
+- derivation certificate checking.
+
+Narrow families may remain only if:
+
+- they have distinct derivation mechanisms;
+- they occur under genuinely different parameter regimes;
+- or no valid generalization has been found.
+
+Otherwise, prefer the general family and record the narrow inequalities as special cases or coverage evidence.
+
+## Anti-overfitting to computed facets
+
+Computed facets from small instances are evidence, not templates to hard-code.
+
+Do not create a symbolic family that merely repeats a concrete facet with renamed variables.
+
+A family that depends on a concrete instance size or a concrete support must be treated as a local candidate.
+
+Before reporting local candidates, attempt to generalize them using:
+
+- arbitrary subset \(D\);
+- complements such as \(J\setminus D\);
+- intersections and set differences;
+- threshold expressions such as \(b-|J\setminus D|\);
+- coefficients obtained from residual, coefficient tightening, mixed MIR, or MIR-over-MIR derivations.

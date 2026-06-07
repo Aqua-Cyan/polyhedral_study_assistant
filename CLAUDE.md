@@ -345,3 +345,63 @@ The first implementation should focus on:
 * `validity.py`: finite feasible-point validity checks;
 * `family.py`: candidate family instantiation and matching;
 * tests for normalization, validity, family instantiation, and derivation certificates.
+
+## Instance scaling rule
+
+Do not rely only on the smallest examples.
+
+For a parametric integer set, the study must use a staged instance plan:
+
+1. tiny sanity instances, used only to test code and conventions;
+2. small structured instances, used to identify initial facet patterns;
+3. medium structured instances, used to test whether proposed families generalize;
+4. random or exhaustive small-to-medium sweeps, used to find counterexamples and missing families.
+
+A symbolic family should not be considered stable if it only appears in tiny instances.
+
+For 0-1 sets, keep enumeration computationally feasible, but increase instance size until at least some tested cases have enough variables to distinguish:
+
+- singleton supports;
+- pair supports;
+- proper subset supports;
+- full-set supports;
+- overlapping supports;
+- nested supports;
+- asymmetric threshold cases.
+
+For two-set models such as MALP, do not test only \(|J_1\cup J_2|\le 3\). Include cases with \(|J_1\cup J_2|\ge 4\) and, when feasible, \(|J_1\cup J_2|\ge 5\) or \(6\).
+
+If larger cases are computationally too expensive, state the limit explicitly and generate targeted structured cases rather than stopping at tiny examples.
+
+## Family compression and generalization rule
+
+Do not create many narrowly tailored families merely to cover the current computed facets.
+
+If the report contains many candidate or derived families with similar structure, the assistant must attempt to merge them into a more general symbolic family.
+
+Before finalizing a report, perform a family-compression pass:
+
+1. group families by support pattern, coefficient pattern, source constraints, and derivation route;
+2. check whether several families are special cases of a common parameterized family;
+3. propose the more general family;
+4. instantiate the general family back on all tested instances;
+5. run exact matching against computed facets;
+6. run finite validity checks;
+7. try to derive the general family using documented c-MIR patterns;
+8. replace the narrow families only if the general family passes the validation gates.
+
+A family is suspiciously over-specialized if it mentions concrete instance sizes, concrete variable names, or a fixed support that is not required by the mathematical model.
+
+The preferred output is a small number of parameterized families with clear conditions, not a long list of ad hoc inequalities.
+
+## Anti-overfitting rule
+
+An inequality family must not be introduced solely because it covers one computed facet in one small instance.
+
+A family based on a single small-instance facet must be labeled as `local candidate` unless:
+
+- it appears across multiple instance sizes or regimes;
+- it is derived from source constraints by a documented c-MIR pattern;
+- or it is clearly a specialization of a more general derived family.
+
+If many local candidates are produced, pause and search for a common generalization before adding more local candidates.
