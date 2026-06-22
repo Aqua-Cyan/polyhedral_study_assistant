@@ -1,0 +1,24 @@
+{
+  "decision": "RUN_FAMILY_GUESSER",
+  "reason": "Research is not complete: candidate_records=728, unresolved_records=0, signature_count=198. Selected concrete task `malp-family-compression-0001` of type `family_compression`.",
+  "selected_task": {
+    "id": "malp-family-compression-0001",
+    "problem_id": "malp",
+    "type": "family_compression",
+    "status": "open",
+    "priority": 1,
+    "assigned_agent": "FamilyGuesser",
+    "candidate_count": 728,
+    "required_actions": [
+      "cluster candidate facets by support and coefficient pattern",
+      "search for a common parameterized family",
+      "express family using D, J1\\D, J2\\D, intersections, and threshold residuals",
+      "instantiate proposed family on all tested instances",
+      "send to Verifier for exact matching and finite validity"
+    ],
+    "success_criterion": "Replace multiple local candidate families with a smaller number of general parameterized candidate families, or explain why compression failed."
+  },
+  "next_agent": "FamilyGuesser",
+  "success_criterion": "Replace multiple local candidate families with a smaller number of general parameterized candidate families, or explain why compression failed.",
+  "stop": false
+}

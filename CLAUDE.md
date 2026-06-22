@@ -405,3 +405,7 @@ A family based on a single small-instance facet must be labeled as `local candid
 - or it is clearly a specialization of a more general derived family.
 
 If many local candidates are produced, pause and search for a common generalization before adding more local candidates.
+
+## When to stop
+
+Before continuing a research loop, read `reports/<problem>_state.json` and `tasks/TASK_POOL.json`. Do not decide from the Markdown report alone whether the task is complete.

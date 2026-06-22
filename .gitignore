@@ -20,3 +20,6 @@ reports/tmp/
 *.ieq
 *.traf
 *.out.claude/
+
+logs/
+reports/last_claude_execution.json

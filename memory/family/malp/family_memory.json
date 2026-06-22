@@ -1,0 +1,41 @@
+{
+  "problem_id": "malp",
+  "derived_families": [
+    {
+      "name": "variable_bounds",
+      "status": "derived",
+      "reason": "binary domain",
+      "covered_records": 3628
+    },
+    {
+      "name": "activation_j1",
+      "status": "derived",
+      "reason": "original model constraint",
+      "covered_records": 194
+    },
+    {
+      "name": "activation_j2",
+      "status": "derived",
+      "reason": "original model constraint",
+      "covered_records": 194
+    },
+    {
+      "name": "single_activation_residual_j1",
+      "status": "derived",
+      "reason": "residual from x(J1) >= b1 y1",
+      "covered_records": 1228
+    },
+    {
+      "name": "single_activation_residual_j2",
+      "status": "derived",
+      "reason": "residual from x(J2) >= b2 y2",
+      "covered_records": 1228
+    }
+  ],
+  "candidate_family_count": 728,
+  "unresolved_facet_count": 0,
+  "notes": [
+    "This file is problem-specific memory for MALP.",
+    "Do not mix it with other problems. Use memory/family/<problem_id>/ for each new study."
+  ]
+}

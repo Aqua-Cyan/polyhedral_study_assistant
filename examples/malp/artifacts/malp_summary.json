@@ -1,0 +1,554 @@
+{
+  "instances": [
+    {
+      "name": "sanity_disjoint_2",
+      "stage": "sanity",
+      "feasible_points": 49,
+      "inequalities": 14,
+      "nontrivial_facets": []
+    },
+    {
+      "name": "sanity_overlap_1",
+      "stage": "sanity",
+      "feasible_points": 25,
+      "inequalities": 12,
+      "nontrivial_facets": []
+    },
+    {
+      "name": "disjoint_3x3",
+      "stage": "structured",
+      "feasible_points": 144,
+      "inequalities": 24,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_1 <= 0",
+        "-x_b - x_c + y_1 <= 0",
+        "-x_a - x_c + y_1 <= 0",
+        "-x_d - x_e + y_2 <= 0",
+        "-x_d - x_f + y_2 <= 0",
+        "-x_e - x_f + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "overlap_1",
+      "stage": "structured",
+      "feasible_points": 74,
+      "inequalities": 22,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_1 <= 0",
+        "-x_a - x_c + y_1 <= 0",
+        "-x_b - x_c + y_1 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_c - x_e + y_2 <= 0",
+        "-x_d - x_e + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "overlap_2",
+      "stage": "structured",
+      "feasible_points": 84,
+      "inequalities": 26,
+      "nontrivial_facets": [
+        "-x_a - x_b - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d + y_1 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_c - x_e + y_2 <= 0",
+        "-x_d - x_e + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "nested_j1_in_j2",
+      "stage": "structured",
+      "feasible_points": 38,
+      "inequalities": 27,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_2 <= 0",
+        "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+        "-x_b - x_c + y_2 <= 0",
+        "-x_a - x_b - x_c + 2 y_2 <= 0",
+        "-x_a - x_c + y_2 <= 0",
+        "-x_a - x_b - x_c - x_d + y_1 + 2 y_2 <= 0",
+        "-x_a - x_b - x_d + y_1 + y_2 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_a - x_c - x_d + 2 y_2 <= 0",
+        "-x_b - x_c - x_d + 2 y_2 <= 0",
+        "-x_b - x_d + y_2 <= 0",
+        "-x_a - x_b - x_d + 2 y_2 <= 0",
+        "-x_a - x_d + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "nested_j2_in_j1",
+      "stage": "structured",
+      "feasible_points": 38,
+      "inequalities": 27,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_1 <= 0",
+        "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+        "-x_a - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c + 2 y_1 <= 0",
+        "-x_b - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c - x_d + 2 y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d + y_1 + y_2 <= 0",
+        "-x_a - x_d + y_1 <= 0",
+        "-x_a - x_b - x_d + 2 y_1 <= 0",
+        "-x_b - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d + 2 y_1 <= 0",
+        "-x_b - x_c - x_d + 2 y_1 <= 0",
+        "-x_c - x_d + y_1 <= 0"
+      ]
+    },
+    {
+      "name": "identical",
+      "stage": "structured",
+      "feasible_points": 23,
+      "inequalities": 15,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_2 <= 0",
+        "-x_b - x_c + y_2 <= 0",
+        "-x_a - x_c + y_2 <= 0",
+        "-x_a - x_b - x_c + y_1 + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "boundary_full",
+      "stage": "structured",
+      "feasible_points": 34,
+      "inequalities": 12,
+      "nontrivial_facets": [
+        "-x_b - x_c - x_d + y_1 + y_2 <= 0",
+        "-x_a + y_1 <= 0",
+        "-x_b + y_1 <= 0",
+        "-x_c + y_1 <= 0"
+      ]
+    },
+    {
+      "name": "medium_overlap_5",
+      "stage": "medium",
+      "feasible_points": 146,
+      "inequalities": 39,
+      "nontrivial_facets": [
+        "-x_a - x_b - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_c - x_d - x_f + y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d + y_1 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_c - x_e + y_2 <= 0",
+        "-x_c - x_d - x_e + 2 y_2 <= 0",
+        "-x_d - x_e + y_2 <= 0",
+        "-x_c - x_f + y_2 <= 0",
+        "-x_c - x_d - x_f + 2 y_2 <= 0",
+        "-x_d - x_f + y_2 <= 0",
+        "-x_c - x_e - x_f + 2 y_2 <= 0",
+        "-x_d - x_e - x_f + 2 y_2 <= 0",
+        "-x_e - x_f + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "medium_identical_5",
+      "stage": "medium",
+      "feasible_points": 70,
+      "inequalities": 46,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_2 <= 0",
+        "-x_b - x_c + y_2 <= 0",
+        "-x_a - x_b - x_c + 2 y_2 <= 0",
+        "-x_a - x_c + y_2 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_a - x_c - x_d + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_d + 3 y_2 <= 0",
+        "-x_b - x_c - x_d + 2 y_2 <= 0",
+        "-x_b - x_d + y_2 <= 0",
+        "-x_a - x_b - x_d + 2 y_2 <= 0",
+        "-x_a - x_d + y_2 <= 0",
+        "-x_a - x_b - x_c - x_d + y_1 + 2 y_2 <= 0",
+        "-x_d - x_e + y_2 <= 0",
+        "-x_a - x_d - x_e + 2 y_2 <= 0",
+        "-x_a - x_b - x_d - x_e + 3 y_2 <= 0",
+        "-x_b - x_d - x_e + 2 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + 3 y_2 <= 0",
+        "-x_a - x_c - x_d - x_e + 3 y_2 <= 0",
+        "-x_c - x_d - x_e + 2 y_2 <= 0",
+        "-x_c - x_e + y_2 <= 0",
+        "-x_a - x_c - x_e + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_e + 3 y_2 <= 0",
+        "-x_b - x_c - x_e + 2 y_2 <= 0",
+        "-x_b - x_e + y_2 <= 0",
+        "-x_a - x_b - x_e + 2 y_2 <= 0",
+        "-x_a - x_e + y_2 <= 0",
+        "-x_a - x_b - x_d - x_e + y_1 + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_e + 2 y_1 + 2 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + y_1 + 2 y_2 <= 0",
+        "-x_a - x_c - x_d - x_e + y_1 + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_e + y_1 + 2 y_2 <= 0"
+      ]
+    },
+    {
+      "name": "medium_nested_6",
+      "stage": "medium",
+      "feasible_points": 137,
+      "inequalities": 78,
+      "nontrivial_facets": [
+        "-x_a - x_b - x_d + y_2 <= 0",
+        "-x_a - x_b - x_e + y_2 <= 0",
+        "-x_a - x_b - x_f + y_2 <= 0",
+        "-x_a - x_b + y_1 <= 0",
+        "-x_a - x_b - x_c - x_d + 2 y_2 <= 0",
+        "-x_b - x_c - x_d + y_2 <= 0",
+        "-x_a - x_c - x_d + y_2 <= 0",
+        "-x_a - x_b - x_c - x_e + 2 y_2 <= 0",
+        "-x_b - x_c - x_e + y_2 <= 0",
+        "-x_a - x_c - x_e + y_2 <= 0",
+        "-x_a - x_b - x_c - x_f + 2 y_2 <= 0",
+        "-x_b - x_c - x_f + y_2 <= 0",
+        "-x_a - x_c - x_f + y_2 <= 0",
+        "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+        "-x_b - x_c + y_1 <= 0",
+        "-x_a - x_c + y_1 <= 0",
+        "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_e + 2 y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d - x_e + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_e + 3 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + 2 y_2 <= 0",
+        "-x_a - x_c - x_d - x_e + 2 y_2 <= 0",
+        "-x_c - x_d - x_e + y_2 <= 0",
+        "-x_b - x_d - x_e + y_2 <= 0",
+        "-x_a - x_d - x_e + y_2 <= 0",
+        "-x_a - x_c - x_d - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_f + 2 y_1 + y_2 <= 0",
+        "-x_b - x_c - x_d - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d - x_f + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_f + 3 y_2 <= 0",
+        "-x_b - x_c - x_d - x_f + 2 y_2 <= 0",
+        "-x_a - x_c - x_d - x_f + 2 y_2 <= 0",
+        "-x_c - x_d - x_f + y_2 <= 0",
+        "-x_b - x_d - x_f + y_2 <= 0",
+        "-x_a - x_d - x_f + y_2 <= 0",
+        "-x_a - x_c - x_e - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_c - x_e - x_f + 2 y_1 + y_2 <= 0",
+        "-x_b - x_c - x_e - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_e - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_e - x_f + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_e - x_f + 3 y_2 <= 0",
+        "-x_b - x_c - x_e - x_f + 2 y_2 <= 0",
+        "-x_a - x_c - x_e - x_f + 2 y_2 <= 0",
+        "-x_a - x_b - x_d - x_e - x_f + 3 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e - x_f + 3 y_2 <= 0",
+        "-x_a - x_c - x_d - x_e - x_f + 3 y_2 <= 0",
+        "-x_c - x_d - x_e - x_f + 2 y_2 <= 0",
+        "-x_b - x_d - x_e - x_f + 2 y_2 <= 0",
+        "-x_a - x_d - x_e - x_f + 2 y_2 <= 0",
+        "-x_d - x_e - x_f + y_2 <= 0",
+        "-x_c - x_e - x_f + y_2 <= 0",
+        "-x_b - x_e - x_f + y_2 <= 0",
+        "-x_a - x_e - x_f + y_2 <= 0",
+        "-x_a - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+        "-x_a - x_b - x_c - x_d - x_e - x_f + 2 y_1 + 2 y_2 <= 0",
+        "-x_b - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+        "-x_a - x_b - x_d - x_e - x_f + y_1 + 2 y_2 <= 0"
+      ]
+    },
+    {
+      "name": "sweep_421",
+      "stage": "sweep",
+      "feasible_points": 94,
+      "inequalities": 20,
+      "nontrivial_facets": [
+        "-x_a - x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+        "-x_c - x_d + y_2 <= 0",
+        "-x_c - x_e + y_2 <= 0",
+        "-x_d - x_e + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "sweep_422",
+      "stage": "sweep",
+      "feasible_points": 95,
+      "inequalities": 26,
+      "nontrivial_facets": [
+        "-x_a - x_b - x_c + y_1 <= 0",
+        "-x_a - x_b - x_d + y_1 <= 0",
+        "-x_b - x_c - x_d + y_2 <= 0",
+        "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+        "-x_a - x_c - x_d + y_1 <= 0",
+        "-x_b - x_c - x_d + y_1 <= 0",
+        "-x_b - x_c - x_e + y_2 <= 0",
+        "-x_b - x_d - x_e + y_2 <= 0",
+        "-x_c - x_d - x_e + y_2 <= 0",
+        "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0"
+      ]
+    },
+    {
+      "name": "sweep_431",
+      "stage": "sweep",
+      "feasible_points": 164,
+      "inequalities": 31,
+      "nontrivial_facets": [
+        "-x_a - x_b + y_1 <= 0",
+        "-x_a - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c + 2 y_1 <= 0",
+        "-x_b - x_c + y_1 <= 0",
+        "-x_a - x_b - x_c - x_d - x_e - x_f + 2 y_1 + y_2 <= 0",
+        "-x_a - x_c - x_d - x_e - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_b - x_d - x_e - x_f + y_1 + y_2 <= 0",
+        "-x_a - x_d + y_1 <= 0",
+        "-x_a - x_b - x_d + 2 y_1 <= 0",
+        "-x_b - x_d + y_1 <= 0",
+        "-x_a - x_c - x_d + 2 y_1 <= 0",
+        "-x_b - x_c - x_d + 2 y_1 <= 0",
+        "-x_c - x_d + y_1 <= 0"
+      ]
+    }
+  ],
+  "unmatched_facets": [
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+      "source": "overlap_2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "overlap_2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "overlap_2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+      "source": "nested_j1_in_j2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + y_1 + 2 y_2 <= 0",
+      "source": "nested_j1_in_j2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d + y_1 + y_2 <= 0",
+      "source": "nested_j1_in_j2",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+      "source": "nested_j2_in_j1",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + 2 y_1 + y_2 <= 0",
+      "source": "nested_j2_in_j1",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d + y_1 + y_2 <= 0",
+      "source": "nested_j2_in_j1",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+      "source": "identical",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d + y_1 + y_2 <= 0",
+      "source": "boundary_full",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_f + y_1 + y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_f + y_1 + y_2 <= 0",
+      "source": "medium_overlap_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d - x_e + y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_e + 2 y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e + y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e + y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_e + y_1 + 2 y_2 <= 0",
+      "source": "medium_identical_5",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_e + 2 y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_f + 2 y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_e - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_e - x_f + 2 y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_e - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_e - x_f + y_1 + y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_e - x_f + 2 y_1 + 2 y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d - x_e - x_f + y_1 + 2 y_2 <= 0",
+      "source": "medium_nested_6",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "sweep_421",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d + y_1 + y_2 <= 0",
+      "source": "sweep_422",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_b - x_c - x_d - x_e + y_1 + y_2 <= 0",
+      "source": "sweep_422",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_c - x_d - x_e - x_f + 2 y_1 + y_2 <= 0",
+      "source": "sweep_431",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_c - x_d - x_e - x_f + y_1 + y_2 <= 0",
+      "source": "sweep_431",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    },
+    {
+      "inequality": "-x_a - x_b - x_d - x_e - x_f + y_1 + y_2 <= 0",
+      "source": "sweep_431",
+      "reason": "Target contains nonzero coefficients outside the selected source row and activation variable."
+    }
+  ]
+}
