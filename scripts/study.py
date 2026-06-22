@@ -9,15 +9,17 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+SRC_ROOT = PROJECT_ROOT / "src"
 
 # Make repository root importable when running:
 #   python scripts/study.py --problem malp
 #
 # Without this, Python sees scripts/ as the import root and cannot import
 # examples.malp.study.
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
+for path in (PROJECT_ROOT, SRC_ROOT):
+    text = str(path)
+    if text not in sys.path:
+        sys.path.insert(0, text)
 
 def problem_dir(problem_id: str) -> Path:
     return PROJECT_ROOT / "examples" / problem_id

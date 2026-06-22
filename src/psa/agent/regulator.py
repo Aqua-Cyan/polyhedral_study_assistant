@@ -205,6 +205,14 @@ class SingleRegulator:
         3. Then analyze unresolved signatures.
         4. Fall back to priority order.
         """
+	followup_tasks = [
+    		task for task in tasks
+    		if task.get("type") in {"derive_family", "implement_family", "revise_guess"}
+	]
+
+	if followup_tasks:
+    		return sorted(followup_tasks, key=self._task_rank_key)[0]
+
         family_compression = [
             task for task in tasks
             if task.get("type") == "family_compression"

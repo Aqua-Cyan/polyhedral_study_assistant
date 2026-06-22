@@ -1,18 +1,23 @@
+from __future__ import annotations
+
+import json
 from pathlib import Path
 
 import pytest
 
 pytest.importorskip("cdd")
 
-from examples.malp.study import run_study
+from examples.malp.study import run
 
 
-def test_malp_study_smoke(tmp_path: Path) -> None:
-    outputs = run_study(tmp_path)
+def test_malp_study_smoke() -> None:
+    state = run(max_union_size=1)
 
-    assert outputs.report_path.exists()
-    assert outputs.json_path.exists()
-    assert "## Derived or proved symbolic inequality families" in outputs.report_text
-    assert "## Candidate symbolic inequality families" in outputs.report_text
-    assert "## Derivation attempts for not-yet-covered facets" in outputs.report_text
-    assert "## Unresolved computed facets" in outputs.report_text
+    assert state["problem_id"] == "malp"
+    assert "summary" in state
+    assert "candidate_records" in state["summary"]
+    assert Path("reports/malp_state.json").exists()
+    assert Path("reports/malp_report.md").exists()
+
+    loaded = json.loads(Path("reports/malp_state.json").read_text(encoding="utf-8"))
+    assert loaded["problem_id"] == "malp"

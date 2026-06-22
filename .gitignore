@@ -23,3 +23,17 @@ reports/tmp/
 
 logs/
 reports/last_claude_execution.json
+
+.claude/worktrees/
+.claude/settings.local.json
+
+logs/
+reports/
+memory/facets/
+memory/family/
+tasks/TASK_POOL.json
+examples/*/artifacts/
+
+src/*.egg-info/
+**/__pycache__/
+.pytest_cache/

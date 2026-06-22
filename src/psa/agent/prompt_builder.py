@@ -67,7 +67,7 @@ def _context_files(problem_id: str) -> list[str]:
         f"- `memory/family/{problem_id}/family_memory.json`",
         "- `docs/research-workflow.md`",
         "- `docs/reporting-standard.md`",
-        "- `docs/facet-analysis.md` if present",
+        "- `docs/facet-analysis-template.md` if present",
         "- `docs/cmir_patterns/` if present",
         "",
     ]
@@ -338,7 +338,7 @@ def _build_verifier_prompt(
             "}",
             "```",
             "",
-            "# Optional task-pool update",
+            "# Required task-pool update",
             "",
             "If the verdict is `accept_for_implementation`, add a concrete open task to `tasks/TASK_POOL.json` with type `implement_family` or `derive_family`.",
             "",
@@ -346,6 +346,9 @@ def _build_verifier_prompt(
             "",
             "If the verdict is `invalid`, do not delete the guess. Keep the verification report as memory so the same bad family is not proposed again.",
             "",
+	    "If the verdict is `insufficient`, add concrete information request or refinement task",
+            "",
+
             "# Expected final response",
             "",
             "Report:",
