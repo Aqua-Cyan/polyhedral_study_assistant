@@ -1,434 +1,445 @@
 ---
 
 name: integer-hull-discovery
-description: use this skill when analyzing integer linear sets, discovering convex hull descriptions, interpreting cddlib-generated facets, deriving valid inequalities with c-MIR, validating candidate facet families, or tracking proof obligations for integer hull descriptions.
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+description: Use this skill when analyzing integer linear sets, discovering convex-hull descriptions, interpreting cddlib-generated facets, deriving valid inequalities with c-MIR or mixed MIR, classifying facet families, building problem adapters, or running regulator-controlled integer-hull research loops.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Integer Hull Discovery
 
-When asked to analyze the convex hull of an integer linear set, do not guess the final convex hull description directly.
+This skill supports research workflows for parametric integer linear sets.
 
-Use a staged and iterative research workflow. Treat computational evidence, valid inequality derivations, facetness proofs, and complete hull proofs as different levels of evidence.
+Do not guess a complete convex-hull description directly.
 
-The central goal is not to list computed facets. The goal is to derive symbolic inequality families from concrete computed facets.
+Use staged computational evidence, symbolic family discovery, derivation certificates, finite validation, and regulator-controlled iteration.
+
+## Core principle
+
+Computed facets are evidence, not the final mathematical output.
+
+The final research output should be symbolic inequality families with:
+
+* parameter conditions;
+* source constraints;
+* derivation certificates or explicit proof obligations;
+* exact matching status;
+* finite validity status;
+* facetness status;
+* completeness status.
+
+Never call a description "the convex hull" unless validity and completeness are proved.
 
 ## Required workflow
 
-1. Formalize the set.
+### 1. Formalize the set
 
-   * Define all variables, domains, index sets, parameters, and assumptions.
-   * State whether index sets may overlap.
-   * State whether parameters satisfy feasibility assumptions.
-   * Preserve the user's notation.
-   * If useful, internally analyze intersections, differences, nested cases, and symmetry classes.
+Define:
 
-2. Identify the intended goal.
+* variables;
+* domains;
+* index sets;
+* parameters;
+* assumptions;
+* possible overlap among index sets;
+* feasibility assumptions;
+* intended relaxation if any.
 
-   * Complete convex hull description.
-   * Valid inequality family.
-   * Facet family.
-   * Separation routine.
-   * Extended formulation.
-   * Computational exploration only.
+When a model is given in overlapping index-set notation, preserve the user's notation.
 
-3. Generate or request small instances.
+You may use intersections, set differences, symmetry classes, or partitions internally, but label them as internal analysis devices.
 
-   * Include boundary cases.
-   * Include overlapping and non-overlapping index-set cases when relevant.
-   * Include cases where parameters are tight, such as (b=1) or (b=|J|).
-   * Include random cases if possible.
+### 2. Identify the intended goal
 
-4. Compute and normalize facets.
+Clarify whether the user wants:
 
-   * Enumerate feasible integer points for small instances.
-   * Use cddlib or the configured backend to compute hull facets.
-   * Normalize every inequality.
-   * Record support, coefficient pattern, right-hand side, and symmetry class.
-   * Distinguish variable bounds, original constraints, and nontrivial facets.
+* a complete convex-hull description;
+* a valid inequality family;
+* a facet family;
+* a separation routine;
+* an extended formulation;
+* computational exploration;
+* a problem adapter for the research harness.
 
-5. For every nontrivial facet, identify source constraints.
+Do not overclaim. If the current goal is computational exploration, do not present conjectures as theorems.
 
-   * Rewrite the concrete facet in the user's original notation.
-   * Identify which original constraints contain the variables in the facet support.
-   * Identify which variable bounds, complements, or derived rows may be useful.
+### 3. Create or use a problem adapter
 
-6. Derive the concrete facet before generalizing.
-
-   * Try residual inequalities.
-   * Try coefficient tightening.
-   * Try aggregation plus c-MIR.
-   * Try mixed MIR when valid base inequalities can be formed.
-   * Try MIR after MIR, using already derived valid inequalities as new source rows.
-   * Record the derivation as a certificate, not only as prose.
-
-7. Generalize only after concrete derivation.
-
-   * Turn a successful concrete derivation into a symbolic family.
-   * State all index conditions and parameter ranges.
-   * Specify whether the family is proved valid, candidate, invalidated, facet-defining, or complete.
-
-8. Validate candidate families.
-
-   * Instantiate the family on tested small instances.
-   * Check exact normalized equality against computed facets when claiming coverage.
-   * Check finite validity on all enumerated feasible integer points.
-   * If invalid, produce a counterexample.
-   * If finite-valid but underived, keep it as candidate and continue trying c-MIR patterns.
-   * If a derivation certificate exists, promote it to derived/proved valid.
-
-9. Repeat.
-
-   * Do not stop after one report if facets remain unexplained.
-   * Do not stop after finding one candidate family.
-   * Do not stop after invalidating one candidate family.
-   * Refine candidates and rerun validation until all computed facets are classified or a blocker is reported.
-
-10. Prove or label honestly.
-
-* Never call a description "the convex hull" unless completeness is proved.
-* If only small examples support it, label it `experimentally supported`.
-* If finite tests pass but no derivation exists, label it `candidate`.
-* If a feasible point violates it, label it `invalidated`.
-* If validity is proved but completeness is not, say so explicitly.
-
-## c-MIR pattern priority
-
-For every unfamiliar computed facet, use the following derivation order before reporting it as unresolved.
-
-### Residual pattern
-
-Given
-
-[
-x(J)\ge by
-]
-
-and (D\subseteq J), use (x(J\setminus D)\le |J\setminus D|) to derive
-
-[
-x(D)\ge (b-|J\setminus D|)y
-]
-
-when (b-|J\setminus D|>0).
-
-Do not restrict this to the minimal case where the coefficient is (1). Larger residual coefficients must also be considered.
-
-### Coefficient tightening
-
-If an aggregate or source row contains extra variables or weak coefficients, try:
-
-* upper-bound substitution;
-* lower-bound substitution;
-* binary complementation;
-* eliminating variables outside target support;
-* tightening coefficients on activation variables;
-* tightening after residualization;
-* tightening after MIR.
-
-Record the pre-tightening and post-tightening inequalities.
-
-### Aggregation plus c-MIR
-
-If the facet involves multiple source constraints, try nonnegative aggregation and then c-MIR.
-
-Record:
-
-* multipliers;
-* aggregate row;
-* integer variables;
-* bounded variables;
-* rounding step;
-* final inequality.
-
-### Mixed MIR
-
-Use mixed MIR only when the base inequalities are put into a valid mixed-MIR form. Record:
-
-* (f^i(x)+B g^i(x)\ge \pi_i);
-* (f^i(x)\ge0);
-* (g^i(x)\in\mathbb Z);
-* (B,\pi_i,\tau_i,\gamma_i);
-* ordering by (\gamma_i);
-* common (\bar f);
-* unsimplified mixed-MIR formula;
-* simplified final inequality.
-
-Do not call ordinary addition of constraints "mixing."
-
-### MIR after MIR
-
-A derived valid inequality may become a new source row.
-
-It is allowed to apply MIR after residualization, after coefficient tightening, or after a previous MIR. Document each stage.
-
-## Candidate family validation gate
-
-Do not move directly from computed facets to a claimed symbolic family.
-
-Use this pipeline:
+A new problem should be placed under:
 
 ```text
-computed facets
-→ normalize facets
-→ identify source constraints
-→ try concrete c-MIR derivations
-→ propose candidate symbolic family
-→ instantiate family on concrete test instances
-→ check exact matching against computed facets
-→ check finite validity on enumerated feasible integer points
-→ require a derivation certificate
-→ write family-first report
-→ repeat if unresolved facets or candidates remain
+examples/<problem_id>/
 ```
 
-## Exact matching requirement
-
-A computed facet is covered by a symbolic family only if:
-
-1. the family is instantiated with explicit parameter values;
-2. the instantiated inequality is normalized;
-3. the computed facet is normalized;
-4. the two normalized inequalities are exactly equal.
-
-Do not report coverage based only on visual similarity or coefficient resemblance.
-
-## Finite validity requirement
-
-Every candidate family instance must be checked against all enumerated feasible integer points in the tested small instance.
-
-If a violating point is found, report the candidate as invalidated and include:
-
-* tested instance;
-* family parameter values;
-* instantiated inequality;
-* violating point;
-* violation value or violated side.
-
-Invalidated candidates must not appear as proved or derived families.
-
-## Derivation certificate requirement
-
-A family can be labeled `proved valid` or `derived` only if it has a derivation certificate.
-
-The certificate must use one or more documented derivation patterns:
-
-* residual inequality;
-* coefficient tightening;
-* aggregation;
-* c-MIR;
-* mixed MIR;
-* sequential MIR or MIR applied after MIR.
-
-The certificate must include:
-
-* source constraints;
-* intermediate inequalities;
-* bound substitutions;
-* rounding or mixing step when used;
-* final symbolic inequality;
-* parameter conditions;
-* equality check against computed facets when claiming coverage.
-
-## Candidate status rule
-
-Use these statuses carefully:
-
-* `derived/proved valid`: exact matching, finite validity, and derivation certificate are all available.
-* `candidate`: finite tests may support the family, but a derivation certificate is missing.
-* `invalidated`: a tested feasible point violates an instantiated inequality.
-* `unresolved`: no valid family or derivation attempt currently explains the facet.
-
-A family that passes finite tests but lacks a derivation certificate must remain a candidate.
-
-A family that fails finite validity must be reported as invalidated with a counterexample.
-
-## No unsupported summation of residual demands
-
-Do not add residual inequalities from multiple source constraints and claim the result is valid by default.
-
-Before reporting such a formula as valid, explicitly address:
-
-* whether the same (x)-variables are being counted multiple times;
-* whether overlap creates overcounting;
-* whether c-MIR, mixed MIR, coefficient tightening, or another valid transformation justifies the result;
-* whether finite feasible-point checks support the instantiated inequality.
-
-If these checks fail, downgrade the formula to candidate or invalidated status.
-
-## Do not stop at unmatched facets
-
-When a computed facet is not covered by an existing symbolic family, do not immediately report it as unmatched.
-
-First perform a derivation attempt:
-
-1. identify source constraints whose supports overlap the target facet;
-2. try residualization from each relevant source row;
-3. try nonnegative aggregation and coefficient tightening;
-4. try c-MIR or c-MIR-style residualization;
-5. try mixed MIR if the base rows can be put into the required form;
-6. try MIR after MIR using previously derived inequalities;
-7. if the target facet is derived for the concrete instance, generalize the same derivation symbolically;
-8. only after these attempts fail may the facet be reported as unresolved.
-
-The report must include the derivation attempt, not just the unresolved inequality.
-
-## Required output sections
-
-Use these sections unless the user requests a different format:
-
-1. Problem formalization
-2. Assumptions and edge cases
-3. Small-instance plan
-4. Computed facet summary
-5. Derived/proved symbolic inequality families
-6. Candidate symbolic inequality families
-7. Invalidated candidate families with counterexamples
-8. c-MIR derivation attempts
-9. Exact coverage table
-10. Unresolved facets
-11. Proof obligations
-12. Next refinement loop
-
-## Report organization rule
-
-Organize research reports by inequality family, not by computational instance.
-
-Instance-level output belongs only in a compact evidence table or appendix. Do not list all variable bounds or all concrete inequalities in the main body unless the user explicitly asks for raw computational output.
-
-## Hard rule
-
-Never claim that a system of inequalities gives the convex hull unless both inclusions are proved:
-
-1. every integer feasible point satisfies the proposed inequalities;
-2. every point satisfying the proposed inequalities belongs to the convex hull.
-
-If the reverse inclusion is missing, state the missing proof obligation explicitly.
-
-## Completion rule
-
-A research run is not complete while any computed nontrivial facet remains unexplained.
-
-Continue the refinement loop unless:
-
-1. all computed nontrivial facets are covered by derived/proved families;
-2. all remaining facets have documented failed derivation attempts;
-3. all candidate families are either promoted, invalidated, or explicitly left as candidates with next actions;
-4. a blocker is reported;
-5. the user asks to stop.
-
-## Problem-specific adapter generation
-
-When the user provides a new problem definition under `examples/<problem>/README.md`, do not assume the generic harness already knows the model semantics. Create a thin problem-specific adapter layer under `examples/<problem>/` when needed.
-
-Recommended structure:
+The user should define the model in:
 
 ```text
-examples/<problem>/
-  README.md
-  model.py
-  families.py
-  derive.py
-  study.py
-
-Allowed responsibilities:
-
-model.py: parse or represent concrete instances, define variable order, feasibility predicate, source constraints, and translation back to the user's notation.
-families.py: define problem-specific symbolic or candidate inequality families that implement parameter enumeration and instantiation.
-derive.py: identify source constraints for a computed facet and call the generic c-MIR attemptor. It may add problem-specific derivation attempts, but must not label heuristic matches as proved.
-study.py: orchestrate instance generation, cdd facet computation, family validation gates, derivation attempts, and report generation.
-
-Forbidden responsibilities:
-
-Do not reimplement cdd backend calls if psa.backends.cdd already provides them.
-Do not reimplement inequality normalization.
-Do not reimplement finite validity checking.
-Do not reimplement exact matching.
-Do not reimplement report rendering.
-Do not move problem-specific logic into src/psa/ unless it is genuinely reusable across models.
-
-A problem-specific adapter is a bridge between the mathematical model and the generic harness. It is not a second harness.
-
-Every adapter must use the generic pipeline:
-
-computed facets -> source-constraint identification -> generic c-MIR attempts -> problem-specific attempts if needed -> family proposal -> instantiation matching -> finite validity check -> derivation certificate check -> family-first report
+examples/<problem_id>/README.md
 ```
 
-## MIR-over-MIR rule
+Do not assume arbitrary mathematical Markdown can be parsed directly into a full study.
 
-When direct derivation from original constraints fails, do not stop.
+Instead, create a thin problem-specific adapter containing:
 
-A valid inequality derived in an earlier step may be used as a new source row in a later step. This includes residual inequalities, coefficient-tightened inequalities, aggregation+c-MIR inequalities, and mixed-MIR inequalities.
+* `model.py` if useful;
+* `families.py` if useful;
+* `derive.py` if useful;
+* `study.py`.
 
-For every unresolved facet, try small-depth derivation chains such as:
+The adapter must expose a callable study entry point, currently:
 
-```text
-original row
-→ residual row
-→ relaxed residual row
-→ mixed MIR or aggregation+c-MIR
-→ coefficient tightening
-→ target facet
+```python
+def run(max_union_size: int = 5) -> dict:
+    ...
 ```
 
-The assistant must document each intermediate row and its validity reason.
+The adapter must generate machine-readable research state.
 
-The generic c-MIR attemptor is only a scaffold. If it returns `needs_problem_specific_derivation`, continue with mathematical reasoning using the documented c-MIR patterns. Do not treat a failed generic attempt as proof that the facet cannot be derived. A failed direct derivation is not a failed derivation. The assistant must try derived-row reuse: first derive intermediate valid inequalities, then use them as new source rows for further residual, tightening, c-MIR, mixed-MIR, or MIR-after-MIR attempts.
-
-### Instance scaling requirement
+### 4. Generate staged finite instances
 
 Do not rely only on tiny examples.
 
 Use a staged instance plan:
 
-1. tiny instances for debugging;
-2. small structured instances for first pattern discovery;
-3. medium structured instances for generalization testing;
-4. random or exhaustive sweeps within feasible enumeration limits.
+1. tiny sanity instances;
+2. structured small instances;
+3. medium structured instances;
+4. random or exhaustive sweeps within feasible enumeration limits;
+5. targeted edge cases for suspected missing families.
 
-For 0-1 sets, choose instances large enough to distinguish singleton, pair, proper-subset, and full-support inequalities.
+Include boundary regimes.
 
-For two-set models, include disjoint, overlap, nested, and identical cases. When feasible, include \(|J_1\cup J_2|\ge 4\), \(|J_1\cup J_2|\ge 5\), and asymmetric threshold cases.
+For 0-1 sets, test enough variables to distinguish:
 
-If computation becomes expensive, report the bottleneck and switch to targeted structured cases rather than only using tiny examples.
+* singleton supports;
+* pair supports;
+* proper subsets;
+* full supports;
+* overlaps;
+* nested cases;
+* asymmetric thresholds.
 
-## Family generalization and compression
+If computation is too expensive, state the bottleneck and use targeted structured cases.
 
-Do not produce many ad hoc families that only cover the current small examples.
+### 5. Compute and normalize facets
 
-After candidate families are proposed, perform a compression pass:
+For each finite instance:
 
-1. group candidates by source constraints;
-2. group by support pattern;
-3. group by coefficient pattern;
-4. group by c-MIR derivation route;
-5. search for a common parameterized family containing several candidates as special cases.
+1. enumerate feasible integer points;
+2. compute convex-hull inequalities using the configured backend;
+3. normalize every inequality;
+4. separate variable bounds and original constraints from nontrivial facets;
+5. record support, coefficient pattern, right-hand side, and source constraints.
 
-If a more general family is proposed, it must still pass:
+### 6. Cluster facets
 
-- exact instantiation matching;
-- finite validity checking;
-- derivation certificate checking.
+Group nontrivial facets by:
 
-Narrow families may remain only if:
+* source constraints;
+* support pattern;
+* coefficient pattern;
+* right-hand side pattern;
+* active variables;
+* symmetry class;
+* parameter regime.
 
-- they have distinct derivation mechanisms;
-- they occur under genuinely different parameter regimes;
-- or no valid generalization has been found.
+These clusters are inputs to family discovery.
 
-Otherwise, prefer the general family and record the narrow inequalities as special cases or coverage evidence.
+### 7. Guess symbolic families
 
-## Anti-overfitting to computed facets
+Turn repeated facet patterns into parameterized symbolic family candidates.
 
-Computed facets from small instances are evidence, not templates to hard-code.
+Use:
 
-Do not create a symbolic family that merely repeats a concrete facet with renamed variables.
+* arbitrary subsets such as `D`;
+* complements such as `J \ D`;
+* intersections and set differences;
+* residual expressions such as `b - |J \ D|`;
+* threshold regimes;
+* symmetry or ordering assumptions;
+* candidate MIR or mixed-MIR structure.
 
-A family that depends on a concrete instance size or a concrete support must be treated as a local candidate.
+Do not create one family per concrete facet unless no common structure exists.
 
-Before reporting local candidates, attempt to generalize them using:
+A FamilyGuesser may propose candidates, but those candidates remain unproved.
 
-- arbitrary subset \(D\);
-- complements such as \(J\setminus D\);
-- intersections and set differences;
-- threshold expressions such as \(b-|J\setminus D|\);
-- coefficients obtained from residual, coefficient tightening, mixed MIR, or MIR-over-MIR derivations.
+### 8. Verify candidate families
+
+A candidate family must pass these gates before being reported as derived.
+
+#### Gate 1: exact instantiation matching
+
+For every claimed covered computed facet:
+
+1. instantiate the symbolic family on the finite instance;
+2. normalize the instantiated inequality;
+3. normalize the cddlib facet;
+4. check exact equality.
+
+Visual similarity is not coverage.
+
+#### Gate 2: finite validity check
+
+Check instantiated candidate inequalities against all enumerated feasible integer points for the tested instances.
+
+If violated, record:
+
+* concrete instance;
+* parameter values;
+* inequality;
+* violating feasible point;
+* violation value.
+
+Invalid candidates must not be reported as derived.
+
+#### Gate 3: derivation certificate check
+
+A family may be called derived only with a derivation certificate.
+
+The certificate should include:
+
+* source constraints;
+* selected subsets or parameters;
+* intermediate rows;
+* use of bounds;
+* residualization;
+* coefficient tightening;
+* aggregation;
+* c-MIR, mixed MIR, or MIR-over-MIR steps;
+* final reconstructed inequality;
+* symbolic conditions;
+* limitations.
+
+### 9. Search for derivations
+
+For every nontrivial computed facet or candidate family, attempt:
+
+1. source-constraint identification;
+2. residual derivation;
+3. coefficient tightening;
+4. aggregation plus c-MIR;
+5. mixed MIR;
+6. MIR-over-MIR or derived-row reuse;
+7. family compression;
+8. symbolic generalization.
+
+Only after these attempts fail may a facet be placed in unresolved status.
+
+### 10. Report honestly
+
+Use conservative labels:
+
+* `raw cddlib facet`;
+* `candidate`;
+* `local candidate`;
+* `invalidated`;
+* `experimentally supported`;
+* `derived`;
+* `proved valid`;
+* `facetness unproved`;
+* `complete hull not claimed`;
+* `unresolved`.
+
+Never state that the hull is complete unless a proof is supplied.
+
+## Regulator-controlled loop
+
+When the repository has a regulator loop, do not work as if this is a one-shot prompt.
+
+Read:
+
+```text
+reports/<problem_id>_state.json
+tasks/TASK_POOL.json
+memory/facets/<problem_id>/
+memory/family/<problem_id>/
+```
+
+The regulator decides whether the next role is:
+
+* `FamilyGuesser`;
+* `Verifier`;
+* `DerivationProver`;
+* `StudyAdapter`;
+* generic executor.
+
+Follow the selected task.
+
+Do not ignore `tasks/TASK_POOL.json`.
+
+Do not declare completion if the state shows remaining candidate records, unresolved records, unverified guesses, or open high-priority tasks.
+
+## Role: FamilyGuesser
+
+Use this role when the regulator selects a family-compression or family-guessing task.
+
+Responsibilities:
+
+1. inspect candidate facet clusters;
+2. identify repeated support and coefficient patterns;
+3. propose a small number of general symbolic families;
+4. avoid over-specialized local candidates;
+5. write guess JSON files under:
+
+```text
+memory/family/<problem_id>/guesses/
+```
+
+Do not mark guessed families as derived.
+
+A family guess should include:
+
+* problem id;
+* source task id;
+* family id;
+* symbolic statement;
+* normalized template if applicable;
+* parameters;
+* parameter conditions;
+* subsumed signatures;
+* evidence facets;
+* expected derivation route;
+* validation plan;
+* known risks.
+
+## Role: Verifier
+
+Use this role when the regulator selects a verification task for a family guess.
+
+Responsibilities:
+
+1. read the family guess JSON;
+2. check that the statement is symbolic and well-formed;
+3. check parameters and conditions;
+4. check that it is not just a concrete facet with renamed variables;
+5. check whether evidence facets match the template;
+6. check whether exact instantiation matching is implementable;
+7. check whether finite validity checking is implementable;
+8. check whether the derivation route is plausible;
+9. write verification JSON under:
+
+```text
+memory/family/<problem_id>/verifications/
+```
+
+The verifier verdict should be one of:
+
+* `accept_for_implementation`;
+* `needs_revision`;
+* `invalid`;
+* `insufficient`.
+
+Do not strengthen a guess beyond the available evidence.
+
+## Role: DerivationProver
+
+Use this role when the regulator selects a derivation task.
+
+Responsibilities:
+
+1. identify source constraints;
+2. derive concrete target inequalities when possible;
+3. generalize concrete derivations to symbolic families;
+4. record derivation certificates;
+5. update family status only when gates are passed;
+6. avoid invalid addition or overcounting;
+7. try MIR-over-MIR or derived-row reuse for interaction facets.
+
+## Role: StudyAdapter
+
+Use this role when the regulator asks to create or update a problem-specific adapter.
+
+Responsibilities:
+
+1. read `examples/<problem_id>/README.md`;
+2. preserve user notation in reports;
+3. create problem-specific model and feasibility logic;
+4. generate finite instances;
+5. compute facets;
+6. classify and cluster facets;
+7. output report, state, task pool, and memory files.
+
+## Required outputs
+
+Unless the user asks for a different format, output sections should include:
+
+1. Problem formalization;
+2. Assumptions and edge cases;
+3. Instance generation plan;
+4. cddlib facet analysis plan;
+5. Facet clustering;
+6. Candidate inequality families;
+7. Derivation attempts;
+8. Verification status;
+9. Family compression status;
+10. Proof obligations;
+11. Next regulator task.
+
+## Machine-readable artifacts
+
+A completed study iteration should update:
+
+```text
+reports/<problem_id>_state.json
+reports/<problem_id>_report.md
+tasks/TASK_POOL.json
+memory/facets/<problem_id>/facet_signatures.json
+memory/family/<problem_id>/family_memory.json
+```
+
+Family guesses and verifications should be stored under:
+
+```text
+memory/family/<problem_id>/guesses/
+memory/family/<problem_id>/verifications/
+```
+
+## Anti-overfitting rule
+
+Do not introduce a symbolic family solely because it covers one computed facet in one small instance.
+
+A local candidate must remain local unless:
+
+* it appears across multiple instance sizes or regimes;
+* it is derived from source constraints;
+* it is verified as a specialization of a broader family.
+
+If many local candidates appear, run a family-compression pass.
+
+## Memory rule
+
+Do not clear all memory when starting a new problem.
+
+Use:
+
+```text
+memory/facets/<problem_id>/
+memory/family/<problem_id>/
+memory/facts/<problem_id>/
+```
+
+Use global memory only for reusable facts:
+
+```text
+memory/facts/global/
+```
+
+## Completion rule
+
+The task is incomplete while any of the following remain:
+
+* candidate families without derivation certificates;
+* unresolved computed facets without failure chains;
+* unverified family guesses;
+* invalidated candidates not reflected in revised conditions;
+* open high-priority task-pool items;
+* missing exact matching checks;
+* missing finite validity checks;
+* missing derivation certificates for claimed derived families.
+
+Stop only when the regulator state permits stopping or a real blocker is reached.
+
+If blocked, report:
+
+1. completed work;
+2. unresolved items;
+3. blocker;
+4. smallest next action.

@@ -1,100 +1,288 @@
-\# Problem Adapter Standard
+# Problem Adapter Standard
 
+This document defines how a new problem-specific study should be added to the repository.
 
+The repository should not try to parse arbitrary mathematical Markdown directly into a complete convex-hull study.
 
-A user defines a new parametric integer set by creating:
+Instead, a user supplies a problem statement, and an LLM-assisted coding step creates a thin problem-specific adapter that conforms to the repository workflow.
 
+## New problem location
 
+A new problem should live under:
 
-examples/<problem\_id>/README.md
+```text
+examples/<problem_id>/
+```
 
+The user should define the set in:
 
+```text
+examples/<problem_id>/README.md
+```
 
-The repository does not directly parse arbitrary mathematical Markdown into a complete study. Instead, an LLM-assisted coding step creates a thin problem-specific adapter.
+The README should state:
 
+* variables;
+* domains;
+* index sets;
+* parameters;
+* assumptions;
+* constraints;
+* intended research goal;
+* known regimes or boundary cases if available.
 
+## Required adapter files
 
-The adapter must live under:
+A problem adapter may contain:
 
+```text
+examples/<problem_id>/model.py
+examples/<problem_id>/families.py
+examples/<problem_id>/derive.py
+examples/<problem_id>/study.py
+```
 
+Not every file is mandatory for very small examples, but `study.py` is required.
 
-examples/<problem\_id>/
+## Required study entry point
 
+The adapter must expose a callable entry point.
 
+Current standard:
 
-Required files:
+```python
+def run(max_union_size: int = 5) -> dict:
+    ...
+```
 
+For problems where `max_union_size` is not meaningful, the adapter may interpret the size parameter differently, but it must document the interpretation.
 
+The return value must be a machine-readable state dictionary.
 
-\- model.py
+## Required output artifacts
 
-\- families.py
+Running the adapter should update:
 
-\- derive.py
+```text
+reports/<problem_id>_state.json
+reports/<problem_id>_report.md
+tasks/TASK_POOL.json
+memory/facets/<problem_id>/facet_signatures.json
+memory/family/<problem_id>/family_memory.json
+```
 
-\- study.py
+If family guesses or verifications are produced, they should be stored under:
 
+```text
+memory/family/<problem_id>/guesses/
+memory/family/<problem_id>/verifications/
+```
 
+## What belongs in the adapter
 
-The adapter must expose:
+Problem-specific code may include:
 
+* canonical variable ordering;
+* feasibility predicate;
+* finite instance generation;
+* source constraints;
+* original inequalities;
+* problem-specific candidate family templates;
+* problem-specific derivation attempts;
+* problem-specific notation formatting;
+* problem-specific facet classification.
 
+## What does not belong in the adapter
 
-def run(max\_union\_size: int = 5) -> dict:
+Do not reimplement generic infrastructure in each adapter.
 
-&#x20;   ...
+The adapter should reuse generic code from `src/psa/` for:
 
+* binary point enumeration when applicable;
+* inequality representation;
+* normalization;
+* exact matching;
+* finite validity checking;
+* cdd backend calls;
+* derivation-attempt data structures;
+* report/state utilities when available;
+* regulator orchestration.
+
+If a utility becomes useful across multiple adapters, move it to `src/psa/`.
+
+## State JSON requirements
+
+The state file should include at least:
+
+```json
+{
+  "problem_id": "...",
+  "problem_name": "...",
+  "state_version": 1,
+  "tested_scope": {},
+  "summary": {
+    "instances": 0,
+    "facets_total": 0,
+    "derived_records": 0,
+    "candidate_records": 0,
+    "unresolved_records": 0,
+    "signature_count": 0,
+    "stop_status": "continue"
+  },
+  "instances": [],
+  "derived_families": [],
+  "candidate_facets": [],
+  "unresolved_facets": [],
+  "facet_signature_groups": [],
+  "proof_obligations": []
+}
+```
+
+The regulator depends on:
+
+* `summary.candidate_records`;
+* `summary.unresolved_records`;
+* `summary.signature_count`;
+* `summary.stop_status`;
+* `facet_signature_groups`;
+* `candidate_facets`;
+* `unresolved_facets`.
+
+Do not remove these fields without updating the regulator.
+
+## Task pool requirements
+
+The adapter should create or update:
+
+```text
+tasks/TASK_POOL.json
+```
+
+Tasks should be JSON objects with fields such as:
+
+```json
+{
+  "id": "<problem_id>-family-compression-0001",
+  "problem_id": "<problem_id>",
+  "type": "family_compression",
+  "status": "open",
+  "priority": 1,
+  "assigned_agent": "FamilyGuesser",
+  "required_actions": [],
+  "success_criterion": "..."
+}
+```
 
+Recommended task types:
 
-The adapter must output:
+* `family_compression`;
+* `derive_interaction_family`;
+* `analyze_unresolved_signature`;
+* `verify_family_guess`;
+* `implement_family`;
+* `derive_family`;
+* `revise_guess`.
 
+Avoid scheduling `regulator_decision` as a normal executor task. The regulator is implemented by Python and should not usually be delegated back to Claude Code.
 
+## Status labels
 
-\- reports/<problem\_id>\_state.json
+Use conservative labels:
 
-\- reports/<problem\_id>\_report.md
+* `bound`;
+* `original_constraint`;
+* `raw cddlib facet`;
+* `candidate`;
+* `local candidate`;
+* `invalidated`;
+* `derived`;
+* `proved valid`;
+* `experimentally supported`;
+* `unresolved`.
 
-\- memory/facets/<problem\_id>/facet\_signatures.json
+Do not use `derived` unless a derivation certificate exists.
 
-\- memory/family/<problem\_id>/family\_memory.json
+Do not use `complete` unless a completeness proof exists.
 
-\- tasks/TASK\_POOL.json
+## Exact matching requirement
 
+If a family claims to cover a computed facet, the adapter should eventually support exact normalized matching:
 
+1. instantiate the family;
+2. normalize the instantiated inequality;
+3. normalize the computed facet;
+4. compare exact equality.
 
-The adapter may define:
+Visual similarity is not sufficient.
 
+## Finite validity requirement
 
+If a candidate family is instantiated on a finite test instance, it should eventually be checked on all enumerated feasible integer points for that instance.
 
-\- variables and canonical ordering;
+A violated family must be recorded as invalidated.
 
-\- feasible point enumeration;
+## Derivation certificate requirement
 
-\- source constraints;
+A derived family should have a certificate recording:
 
-\- instance generation;
+* source constraints;
+* subsets or parameters;
+* intermediate rows;
+* bounds used;
+* residualization steps;
+* coefficient tightening steps;
+* aggregation;
+* MIR or mixed-MIR steps;
+* final symbolic statement;
+* conditions and limitations.
 
-\- problem-specific candidate families;
+## Family guessing and verification
 
-\- problem-specific derivation attempts.
+FamilyGuesser writes guesses to:
 
+```text
+memory/family/<problem_id>/guesses/
+```
 
+Verifier writes reports to:
 
-The adapter must not reimplement:
+```text
+memory/family/<problem_id>/verifications/
+```
 
+A guessed family remains a candidate until verified and derived.
 
+## Memory layout
 
-\- inequality normalization;
+Do not mix problem-specific memory across problems.
 
-\- finite validity checking;
+Use:
 
-\- exact matching;
+```text
+memory/facets/<problem_id>/
+memory/family/<problem_id>/
+memory/facts/<problem_id>/
+```
 
-\- cdd backend logic;
+Use:
 
-\- generic report rendering if reusable functions exist.
+```text
+memory/facts/global/
+```
 
+only for reusable facts and workflow rules.
 
+## Customer workflow
 
-Problem-specific logic must remain under examples/<problem\_id>/ unless it becomes genuinely reusable.
+For a new customer problem:
 
+1. create `examples/<problem_id>/README.md`;
+2. run the generic study command;
+3. if no adapter exists, ask the coding agent to generate one from the README;
+4. run the adapter;
+5. inspect the generated state and task pool;
+6. let the regulator choose the next task.
+
+The generic driver should not contain problem-specific mathematics.
+
+Problem-specific mathematics belongs in the adapter.
