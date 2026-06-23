@@ -1,3 +1,5 @@
+# src/psa/agent/regulator.py
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,27 +30,7 @@ class RegulatorDecision:
 
 
 class SingleRegulator:
-    """A deterministic research-loop regulator.
-
-    The regulator does not prove inequalities and does not guess families.
-    It only decides what role should act next.
-
-    Stage 3 roles:
-
-    - FamilyGuesser:
-        groups many candidate facets and proposes a more general symbolic family.
-        It writes guess JSON files to memory/family/<problem_id>/guesses/.
-
-    - Verifier:
-        checks an unverified guess and writes a verification report to
-        memory/family/<problem_id>/verifications/.
-
-    - DerivationProver:
-        tries to derive a concrete facet/family using residual, tightening,
-        mixed MIR, or MIR-over-MIR.
-
-    The regulator itself should not be scheduled as a normal Claude Code task.
-    """
+    """Deterministic research-loop regulator."""
 
     def decide(self, state: ResearchState) -> RegulatorDecision:
         if not state.raw_state:
@@ -119,15 +101,21 @@ class SingleRegulator:
         if task_type == "family_compression":
             decision = "RUN_FAMILY_GUESSER"
             next_agent = "FamilyGuesser"
-        elif task_type == "derive_interaction_family":
-            decision = "DERIVE_INTERACTION"
-            next_agent = assigned_agent if assigned_agent != "Regulator" else "DerivationProver"
-        elif task_type == "analyze_unresolved_signature":
-            decision = "ANALYZE_UNRESOLVED"
-            next_agent = assigned_agent if assigned_agent != "Regulator" else "DerivationProver"
         elif task_type == "verify_family_guess":
             decision = "VERIFY_FAMILY_GUESS"
             next_agent = "Verifier"
+        elif task_type in {"derive_family", "derive_interaction_family"}:
+            decision = "DERIVE_FAMILY"
+            next_agent = assigned_agent if assigned_agent != "Regulator" else "DerivationProver"
+        elif task_type == "implement_family":
+            decision = "IMPLEMENT_FAMILY"
+            next_agent = assigned_agent if assigned_agent != "Regulator" else "DerivationProver"
+        elif task_type == "revise_guess":
+            decision = "REVISE_FAMILY_GUESS"
+            next_agent = "FamilyGuesser"
+        elif task_type == "analyze_unresolved_signature":
+            decision = "ANALYZE_UNRESOLVED"
+            next_agent = assigned_agent if assigned_agent != "Regulator" else "DerivationProver"
         else:
             decision = "CONTINUE_SELECTED_TASK"
             next_agent = assigned_agent
@@ -196,25 +184,19 @@ class SingleRegulator:
         ]
 
     def _select_task(self, state: ResearchState, tasks: list[dict[str, Any]]) -> dict[str, Any]:
-        """Select the next concrete research task.
+        """Select the next concrete research task."""
+        followup_tasks = [
+            task
+            for task in tasks
+            if task.get("type") in {"derive_family", "implement_family", "revise_guess"}
+        ]
 
-        Policy:
-
-        1. If many candidate facets remain, prefer family_compression.
-        2. Otherwise derive interaction families.
-        3. Then analyze unresolved signatures.
-        4. Fall back to priority order.
-        """
-	followup_tasks = [
-    		task for task in tasks
-    		if task.get("type") in {"derive_family", "implement_family", "revise_guess"}
-	]
-
-	if followup_tasks:
-    		return sorted(followup_tasks, key=self._task_rank_key)[0]
+        if followup_tasks:
+            return sorted(followup_tasks, key=self._task_rank_key)[0]
 
         family_compression = [
-            task for task in tasks
+            task
+            for task in tasks
             if task.get("type") == "family_compression"
         ]
 
@@ -228,32 +210,25 @@ class SingleRegulator:
             )[0]
 
         derive_interaction = [
-            task for task in tasks
+            task
+            for task in tasks
             if task.get("type") == "derive_interaction_family"
         ]
 
         if derive_interaction:
-            return sorted(
-                derive_interaction,
-                key=self._task_rank_key,
-            )[0]
+            return sorted(derive_interaction, key=self._task_rank_key)[0]
 
         analyze_unresolved = [
-            task for task in tasks
+            task
+            for task in tasks
             if task.get("type") == "analyze_unresolved_signature"
         ]
 
         if analyze_unresolved:
-            return sorted(
-                analyze_unresolved,
-                key=self._task_rank_key,
-            )[0]
+            return sorted(analyze_unresolved, key=self._task_rank_key)[0]
 
         if family_compression:
-            return sorted(
-                family_compression,
-                key=self._task_rank_key,
-            )[0]
+            return sorted(family_compression, key=self._task_rank_key)[0]
 
         return sorted(tasks, key=self._task_rank_key)[0]
 
