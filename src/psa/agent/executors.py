@@ -121,6 +121,8 @@ class ClaudeCodeExecutor:
                 input=None if "{prompt_file}" in self.command_template else prompt,
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 shell=True,
                 timeout=self.timeout_seconds,
             )
