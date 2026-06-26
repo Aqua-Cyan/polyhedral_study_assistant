@@ -22,106 +22,149 @@ If there are candidate families, unresolved facets, missing derivation certifica
 - `memory/family/malp/family_memory.json`
 - `docs/research-workflow.md`
 - `docs/reporting-standard.md`
-- `docs/facet-analysis.md` if present
+- `docs/facet-analysis-template.md` if present
 - `docs/cmir_patterns/` if present
 
 # Regulator decision
 
-- decision: `RUN_FAMILY_GUESSER`
-- reason: Research is not complete: candidate_records=728, unresolved_records=0, signature_count=198. Selected concrete task `malp-family-compression-0001` of type `family_compression`.
-- next agent role: `FamilyGuesser`
-- success criterion: Replace multiple local candidate families with a smaller number of general parameterized candidate families, or explain why compression failed.
+- decision: `WRITE_FINAL_REPORT`
+- reason: All computed nontrivial facets in the current tested scope are covered by derived symbolic families, but no final research report has been produced yet. Write the family-first final report before stopping.
+- next agent role: `FinalReporter`
+- success criterion: Produce a complete, human-readable family-first research report at the output path, suitable for a researcher to review.
 
 # Selected task
 
-- task id: `malp-family-compression-0001`
-- task type: `family_compression`
-- priority: `1`
-- assigned agent: `FamilyGuesser`
+- task id: `malp-final-report`
+- task type: `write_final_report`
+- priority: `0`
+- assigned agent: `FinalReporter`
+
+## Coverage manifest
+
+- `memory/facets/malp/coverage.json`
+
+## State file
+
+- `reports/malp_state.json`
+
+## Derivations directory
+
+- `memory/family/malp/derivations`
+
+## Guesses directory
+
+- `memory/family/malp/guesses`
+
+## Verifications directory
+
+- `memory/family/malp/verifications`
+
+## Output report path
+
+- `reports/malp_final_report.md`
+
+## Certified families
+
+- `relation-conditioned-residual-gap-mixing` (Relation-conditioned residual-gap mixing family); certificate: `memory/family/malp/derivations/relation-conditioned-residual-gap-mixing_certificate.json`
 
 ## Required actions
 
-- cluster candidate facets by support and coefficient pattern
-- search for a common parameterized family
-- express family using D, J1\D, J2\D, intersections, and threshold residuals
-- instantiate proposed family on all tested instances
-- send to Verifier for exact matching and finite validity
+- read the overlay-applied state JSON for final summary and covered facets
+- read the coverage manifest for per-facet coverage records
+- read each derivation certificate for source constraints and proof steps
+- read each family guess for the symbolic statement and parameter conditions
+- read each verification file for the verifier's checks and notes
+- synthesize all findings into a family-first markdown report
+- include symbolic statements, parameter conditions, derivation certificates, coverage counts, test scope, remaining proof obligations
+- write the report to the output path
 
-# Your role: FamilyGuesser
+# Your role: FinalReporter
 
-You are not proving the family yet.
-You are not allowed to mark a family as derived or proved.
+The research loop has converged: all computed nontrivial facets in the
+current tested scope are covered by derived symbolic families. Your job
+is to synthesize ALL artifacts produced during the loop into a single,
+complete, family-first research report for a human researcher to review.
 
-Your job is to inspect the candidate facet clusters and propose a small number of more general symbolic families that may subsume many local candidates.
+# Inputs to read
 
-Focus especially on:
+- Final state (post-overlay): `reports/malp_state.json`
+- Coverage manifest: `memory/facets/malp/coverage.json`
+- Derivation certificates: `memory/family/malp/derivations/`
+- Family guesses: `memory/family/malp/guesses/`
+- Verifications: `memory/family/malp/verifications/`
+- Study adapter report (intermediate): `reports/malp_report.md`
+- Facet signatures: `memory/facets/malp/facet_signatures.json`
+- Problem description: `examples/malp/README.md`
 
-- repeated support patterns;
-- repeated coefficient patterns;
-- interaction facets involving multiple activation variables;
-- possible subset-parameterized forms using `D`, complements, intersections, and set differences;
-- residual expressions such as `b - |J \ D|`; 
-- MIR-over-MIR or derived-row reuse routes.
+# What the report must contain
+
+Write a family-first markdown report following this structure:
+
+1. **Title and problem description**
+   - State the integer set being studied in original problem notation.
+   - List the tested scope (parameter ranges, tested sizes, backend).
+
+2. **Summary of results**
+   - Total instances tested, total computed facets.
+   - How many facets are covered by built-in families vs discovered families.
+   - Stop status and what it means (computational coverage, not a full theorem).
+
+3. **Derived or proved symbolic inequality families**
+   For EACH family (both built-in families from the study adapter and
+   discovered/certified families from the loop):
+   - family name and identifier
+   - symbolic statement in original problem notation (LaTeX or inline)
+   - parameter conditions
+   - validity status (how validity was checked: built-in, finite-validity, proved)
+   - derivation certificate (if any): summitmarize source constraints, key steps,
+     and the method used (residualization, aggregation, c-MIR, mixed MIR, etc.)
+   - coverage: how many computed facets this family covers, with a few examples
+   - facetness status and completeness status
+   - limitations and boundary cases
+
+4. **Derivation certificates**
+   For each certified family, include a compact summary of the certificate:
+   - source constraints
+   - key derivation steps with intermediate rows
+   - the reconstructed target inequality
+   - any limitations
+
+5. **Coverage summary**
+   - A table: family -> number of covered facets -> evidence source.
+   - Note that coverage is by exact normalized matching, not visual similarity.
+
+6. **Remaining proof obligations**
+   - What a full convex-hull theorem still requires:
+     a. validity proof for all admissible parameters (not just tested ones)
+     b. reverse-inclusion proof (the proposed relaxation is contained in conv(X))
+     c. parameter ranges where each family is facet-defining
+   - Any families that failed derivation and their blocker reasons.
+
+7. **Computational evidence appendix**
+   - Instance count, facet count per relation type (disjoint/overlap/nested/identical).
+   - A sample of covered facets with their instance labels.
+   - Any backfill notes or matching failures recorded.
+
+# Writing rules
+
+- Use the original problem notation from `examples/malp/README.md`.
+- Do NOT present raw cddlib facets as the final result.
+- Do NOT claim a complete convex hull description without a reverse-inclusion proof.
+- Distinguish built-in/standard families (variable bounds, activation rows,
+  residuals) from newly discovered/certified families.
+- If a family was discovered by the agent loop, cite the guess file,
+  verification file, and certificate file paths.
+- The report is for a human researcher. Be precise but readable.
 
 # Output requirement
 
-Create or overwrite this JSON file:
-
-`memory/family/malp/guesses/malp-family-compression-0001.json`
-
-The JSON must have this schema:
-
-```json
-{
-  "problem_id": "...",
-  "source_task_id": "...",
-  "agent": "FamilyGuesser",
-  "status": "proposed",
-  "family_id": "short_unique_name",
-  "family_name": "human readable name",
-  "symbolic_statement_latex": "...",
-  "normalized_template": "...",
-  "parameters": ["D", "..."],
-  "parameter_conditions": ["..."],
-  "subsumed_signatures": ["..."],
-  "evidence_facets": [
-    {
-      "instance": "...",
-      "facet": "...",
-      "parameter_values": {"D": "..."}
-    }
-  ],
-  "expected_derivation_route": [
-    "residual",
-    "support relaxation",
-    "mixed MIR or MIR-over-MIR"
-  ],
-  "validation_plan": [
-    "instantiate on tested instances",
-    "exact normalized matching",
-    "finite validity check",
-    "derivation certificate check"
-  ],
-  "known_risks": ["..."],
-  "notes": "..."
-}
-```
-
-# Rules
-
-1. Prefer one general parameterized family over many local families.
-2. Do not hard-code one tested instance as a family.
-3. Do not claim validity merely from computational evidence.
-4. Do not add the family to derived families.
-5. Do not modify source code unless necessary.
-6. If the current clusters are too heterogeneous, propose several candidate families, but keep the number small.
-7. If no useful generalization is found, write a guess JSON with status `no_good_guess` and explain why.
+Write the report to: `reports/malp_final_report.md`
 
 # Expected final response
 
 Report:
 
-1. which guess file you wrote;
-2. which signatures or facets it tries to subsume;
-3. why the proposed family is more general than the local candidates;
-4. what the Verifier should check next.
+1. the output path of the final report;
+2. which families were included;
+3. the total facet coverage count;
+4. any sections where information was incomplete.

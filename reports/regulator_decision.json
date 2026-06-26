@@ -1,24 +1,39 @@
 {
-  "decision": "RUN_FAMILY_GUESSER",
-  "reason": "Research is not complete: candidate_records=728, unresolved_records=0, signature_count=198. Selected concrete task `malp-family-compression-0001` of type `family_compression`.",
+  "decision": "WRITE_FINAL_REPORT",
+  "reason": "All computed nontrivial facets in the current tested scope are covered by derived symbolic families, but no final research report has been produced yet. Write the family-first final report before stopping.",
   "selected_task": {
-    "id": "malp-family-compression-0001",
+    "id": "malp-final-report",
     "problem_id": "malp",
-    "type": "family_compression",
+    "type": "write_final_report",
     "status": "open",
-    "priority": 1,
-    "assigned_agent": "FamilyGuesser",
-    "candidate_count": 728,
-    "required_actions": [
-      "cluster candidate facets by support and coefficient pattern",
-      "search for a common parameterized family",
-      "express family using D, J1\\D, J2\\D, intersections, and threshold residuals",
-      "instantiate proposed family on all tested instances",
-      "send to Verifier for exact matching and finite validity"
+    "priority": 0,
+    "assigned_agent": "FinalReporter",
+    "state_file": "reports/malp_state.json",
+    "coverage_manifest": "memory/facets/malp/coverage.json",
+    "derivations_dir": "memory/family/malp/derivations",
+    "guesses_dir": "memory/family/malp/guesses",
+    "verifications_dir": "memory/family/malp/verifications",
+    "output_path": "reports/malp_final_report.md",
+    "certified_families": [
+      {
+        "family_id": "relation-conditioned-residual-gap-mixing",
+        "family_name": "Relation-conditioned residual-gap mixing family",
+        "certificate_file": "memory/family/malp/derivations/relation-conditioned-residual-gap-mixing_certificate.json"
+      }
     ],
-    "success_criterion": "Replace multiple local candidate families with a smaller number of general parameterized candidate families, or explain why compression failed."
+    "required_actions": [
+      "read the overlay-applied state JSON for final summary and covered facets",
+      "read the coverage manifest for per-facet coverage records",
+      "read each derivation certificate for source constraints and proof steps",
+      "read each family guess for the symbolic statement and parameter conditions",
+      "read each verification file for the verifier's checks and notes",
+      "synthesize all findings into a family-first markdown report",
+      "include symbolic statements, parameter conditions, derivation certificates, coverage counts, test scope, remaining proof obligations",
+      "write the report to the output path"
+    ],
+    "success_criterion": "Produce a complete, human-readable family-first research report at the output path, suitable for a researcher to review."
   },
-  "next_agent": "FamilyGuesser",
-  "success_criterion": "Replace multiple local candidate families with a smaller number of general parameterized candidate families, or explain why compression failed.",
+  "next_agent": "FinalReporter",
+  "success_criterion": "Produce a complete, human-readable family-first research report at the output path, suitable for a researcher to review.",
   "stop": false
 }

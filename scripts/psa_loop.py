@@ -18,6 +18,7 @@ from psa.agent.executors import ClaudeCodeExecutor
 from psa.agent.prompt_builder import build_next_claude_prompt, write_next_prompt
 from psa.agent.regulator import SingleRegulator
 from psa.agent.state import load_research_state, write_json
+from psa.coverage import apply_coverage_to_state_file
 
 
 def run_study_adapter(problem_id: str, max_size: int) -> None:
@@ -34,6 +35,21 @@ def run_study_adapter(problem_id: str, max_size: int) -> None:
     print(" ".join(command))
 
     subprocess.run(command, cwd=PROJECT_ROOT, check=True)
+
+
+def apply_coverage_overlay(problem_id: str) -> None:
+    """Overlay the persistent coverage manifest onto the freshly written state.
+
+    The study adapter recomputes the state from a fixed classifier every round,
+    so families the agent proved during earlier rounds are not reflected. This
+    overlay prunes covered facets from candidate/unresolved so the regulator's
+    stop counters can actually reach zero.
+    """
+    state_path = PROJECT_ROOT / "reports" / f"{problem_id}_state.json"
+    if not state_path.exists():
+        return
+    apply_coverage_to_state_file(PROJECT_ROOT, problem_id, state_path)
+    print(f"Applied coverage overlay to {state_path}")
 
 
 def run_one_regulator_round(
@@ -53,6 +69,9 @@ def run_one_regulator_round(
     """
     if not skip_study:
         run_study_adapter(problem_id=problem_id, max_size=max_size)
+
+    # Close the coverage feedback loop before the regulator reads the state.
+    apply_coverage_overlay(problem_id=problem_id)
 
     state = load_research_state(
         project_root=PROJECT_ROOT,
@@ -208,9 +227,6 @@ def main() -> None:
         print(f"PSA regulated loop round {round_index}/{args.rounds}")
         print("=" * 80)
 
-        # If --skip-study is set, skip only the first round.
-        # After Claude Code changes files, later rounds should rerun the study adapter
-        # so the regulator sees fresh state.
         skip_study_this_round = args.skip_study and round_index == 1
 
         should_continue = run_one_regulator_round(
