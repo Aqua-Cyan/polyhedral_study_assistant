@@ -30,10 +30,8 @@ def run_study_adapter(problem_id: str, max_size: int) -> None:
         "--max-size",
         str(max_size),
     ]
-
     print("Running study adapter:")
     print(" ".join(command))
-
     subprocess.run(command, cwd=PROJECT_ROOT, check=True)
 
 
@@ -67,11 +65,17 @@ def run_one_regulator_round(
     Returns True if the outer loop should continue.
     Returns False if the loop should stop.
     """
-    if not skip_study:
-        run_study_adapter(problem_id=problem_id, max_size=max_size)
+    # ===== BEGIN CHANGE: skip study if adapter does not exist yet =====
+    # If the adapter doesn't exist yet, skip the study run and let the
+    # regulator generate a CREATE_ADAPTER prompt.  This allows the loop
+    # to cold-start from a user-provided README.md without crashing.
+    adapter_file = PROJECT_ROOT / "examples" / problem_id / "study.py"
+    skip_study_this = skip_study or not adapter_file.exists()
 
-    # Close the coverage feedback loop before the regulator reads the state.
-    apply_coverage_overlay(problem_id=problem_id)
+    if not skip_study_this:
+        run_study_adapter(problem_id=problem_id, max_size=max_size)
+        apply_coverage_overlay(problem_id=problem_id)
+    # ===== END CHANGE =====
 
     state = load_research_state(
         project_root=PROJECT_ROOT,
@@ -156,20 +160,17 @@ def run_one_regulator_round(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run a regulated PSA research-loop iteration.")
-
     parser.add_argument(
         "--problem",
         required=True,
         help="Problem id, e.g. malp.",
     )
-
     parser.add_argument(
         "--max-size",
         type=int,
         default=5,
         help="Size parameter passed to scripts/study.py.",
     )
-
     parser.add_argument(
         "--skip-study",
         action="store_true",
@@ -178,13 +179,11 @@ def parse_args() -> argparse.Namespace:
             "If --execute and --rounds > 1 are used, later rounds rerun the study."
         ),
     )
-
     parser.add_argument(
         "--execute",
         action="store_true",
         help="Automatically send the generated prompt to the configured Claude Code command.",
     )
-
     parser.add_argument(
         "--executor-command",
         default=None,
@@ -194,14 +193,12 @@ def parse_args() -> argparse.Namespace:
             "The prompt is passed through stdin unless the command contains {prompt_file}."
         ),
     )
-
     parser.add_argument(
         "--executor-timeout",
         type=int,
         default=3600,
         help="Timeout in seconds for one Claude Code execution.",
     )
-
     parser.add_argument(
         "--rounds",
         type=int,
@@ -211,7 +208,6 @@ def parse_args() -> argparse.Namespace:
             "Use with --execute for automatic multi-round research."
         ),
     )
-
     return parser.parse_args()
 
 
@@ -227,6 +223,9 @@ def main() -> None:
         print(f"PSA regulated loop round {round_index}/{args.rounds}")
         print("=" * 80)
 
+        # If --skip-study is set, skip only the first round.
+        # After Claude Code changes files, later rounds should rerun the study adapter
+        # so the regulator sees fresh state.
         skip_study_this_round = args.skip_study and round_index == 1
 
         should_continue = run_one_regulator_round(

@@ -17,6 +17,12 @@ def build_next_claude_prompt(
 ) -> str:
     next_agent = decision.next_agent or "ClaudeCode"
 
+    if next_agent == "StudyAdapter" and decision.decision == "CREATE_ADAPTER":
+        return _build_create_adapter_prompt(
+            project_root=project_root,
+            state=state,
+            decision=decision,
+        )
     if next_agent == "FamilyGuesser":
         return _build_family_guesser_prompt(
             project_root=project_root, state=state, decision=decision
@@ -45,6 +51,99 @@ def build_next_claude_prompt(
     return _build_generic_executor_prompt(
         project_root=project_root, state=state, decision=decision
     )
+
+def _build_create_adapter_prompt(
+    *,
+    project_root: Path,
+    state: ResearchState,
+    decision: RegulatorDecision,
+) -> str:
+    problem_id = state.problem_id
+    task = decision.selected_task or {}
+    readme_file = str(task.get("readme_file", f"examples/{problem_id}/README.md"))
+
+    lines: list[str] = []
+    lines.extend(_goal_block(problem_id))
+    lines.extend(_context_files(problem_id))
+    lines.extend(_decision_block(decision))
+    lines.extend(_selected_task_block(task))
+
+    lines.extend(
+        [
+            "# Your role: StudyAdapter (adapter creation)",
+            "",
+            "No study adapter exists yet for this problem.",
+            "The user has provided a problem definition in the README.",
+            "Your job is to read the README and generate a thin problem-specific adapter.",
+            "",
+            f"## Read first",
+            "",
+            f"- `{readme_file}`",
+            "- `docs/adapter-standard.md`",
+            "- `docs/cdd-notes.md`",
+            "- `examples/malp/` (reference implementation, read for patterns)",
+            "",
+            "## Files to create",
+            "",
+            f"1. `examples/{problem_id}/__init__.py` (empty file if not exists)",
+            f"2. `examples/{problem_id}/model.py` — variables, domains, feasibility predicate, instance generation",
+            f"3. `examples/{problem_id}/families.py` — candidate family templates if known from the README",
+            f"4. `examples/{problem_id}/derive.py` — problem-specific derivation attempts if known",
+            f"5. `examples/{problem_id}/study.py` — the entry point",
+            "",
+            "## study.py requirements",
+            "",
+            "The study.py must expose:",
+            "",
+            "```python",
+            "def run(max_union_size: int = 5) -> dict:",
+            "    ...",
+            "```",
+            "",
+            "It must:",
+            "- generate staged finite instances",
+            "- enumerate feasible 0-1 points",
+            "- compute convex-hull inequalities using cddlib via src/psa/backends/",
+            "- normalize inequalities using src/psa/normalize.py",
+            "- classify facets into bound, original_constraint, candidate, unresolved",
+            "- write reports/<problem_id>_state.json with the required state schema",
+            "- write reports/<problem_id>_report.md",
+            "- write tasks/TASK_POOL.json",
+            "- write memory/facets/<problem_id>/facet_signatures.json",
+            "- write memory/family/<problem_id>/family_memory.json",
+            "- return the state dictionary",
+            "",
+            "## Rules",
+            "",
+            "1. Reuse generic utilities from src/psa/ — do not reimplement inequality representation, normalization, binary point enumeration, or cddlib calls.",
+            "2. Preserve the user's original notation from the README in all reports.",
+            "3. Use internal decompositions (intersections, set differences) only as analysis devices.",
+            "4. Do not claim a complete convex hull description.",
+            "5. The state JSON must include the summary fields the regulator depends on: candidate_records, unresolved_records, derived_records, signature_count, stop_status.",
+            "",
+            "## After creating the adapter",
+            "",
+            "Test it by running:",
+            "",
+            f"```bash",
+            f"python scripts/study.py --problem {problem_id} --max-size 5",
+            f"```",
+            "",
+            "If it runs successfully and produces the expected artifacts, the next loop round will pick up the state and continue with the regulator's normal decision chain.",
+            "",
+            "## Expected final response",
+            "",
+            "Report:",
+            "",
+            "1. files created;",
+            "2. the study command and its output;",
+            "3. the state summary (candidate_records, unresolved_records, etc.);",
+            "4. any issues or assumptions made.",
+            "",
+        ]
+    )
+
+    return "\n".join(lines)
 
 
 def _goal_block(problem_id: str) -> list[str]:

@@ -141,10 +141,24 @@ The adapter must return a machine-readable state dictionary and write all requir
 
 ### Onboarding a new problem
 
-1. Create `examples/<problem_id>/README.md` with the formal problem definition.
-2. Create a thin adapter under `examples/<problem_id>/` with a `study.py` exposing `run(...)`.
-3. Run `python scripts/study.py --problem <problem_id> --max-size 5` to test.
-4. Run `python scripts/psa_loop.py --problem <problem_id> --max-size 5 --execute --rounds 10` for the full loop.
+The user only provides the problem definition. The AI agent generates the adapter.
+
+1. The user creates `examples/<problem_id>/README.md` with the formal set definition.
+2. The user runs `python scripts/psa_loop.py --problem <problem_id> --max-size 5 --execute --rounds 10`.
+3. The regulator detects that `examples/<problem_id>/study.py` does not exist and returns a `CREATE_ADAPTER` decision.
+4. The prompt builder generates a prompt instructing Claude Code to:
+   - read `examples/<problem_id>/README.md`;
+   - read `docs/adapter-standard.md` and `examples/malp/` for patterns;
+   - create `model.py`, `families.py`, `derive.py`, and `study.py`;
+   - preserve the user's original notation in reports;
+   - use internal decompositions only as analysis devices;
+   - expose a standard `run(max_union_size: int) -> dict` entry point;
+   - write all required state, report, memory, and task-pool artifacts.
+5. Claude Code creates the adapter and tests it.
+6. The next loop round runs the study adapter normally and the regulator continues with its standard decision chain.
+
+Do not assume arbitrary mathematical Markdown can be parsed directly into a full study. The adapter generation step is where the LLM translates the mathematical definition into executable Python code.
+
 
 ## Required artifacts for each study
 
@@ -164,11 +178,12 @@ The Markdown report is for humans. The JSON state and task pool are for the regu
 
 The `SingleRegulator` in `src/psa/agent/regulator.py` uses a deterministic priority chain:
 
-1. **`RUN_STUDY_FIRST`** — if no `reports/<problem_id>_state.json` exists, run the study adapter first.
-2. **`VERIFY_FAMILY_GUESS`** — if any family guess JSON exists without a corresponding verification JSON, verify it before anything else.
-3. **`DONE`** — if `candidate_count == 0` and `unresolved_count == 0`, stop. No further computational tasks are needed. A complete convex-hull theorem still requires a mathematical completeness proof.
-4. **`BLOCKED_NO_CONCRETE_TASKS`** — if continuation is needed but no concrete open tasks exist in `TASK_POOL.json`.
-5. **Task selection** — from concrete open tasks, in this priority order:
+1. **`CREATE_ADAPTER`** — if `examples/<problem_id>/study.py` does not exist, generate a prompt asking Claude Code to read the problem README and create the adapter. This takes precedence over everything else.
+2. **`RUN_STUDY_FIRST`** — if no `reports/<problem_id>_state.json` exists, run the study adapter first.
+3. **`VERIFY_FAMILY_GUESS`** — if any family guess JSON exists without a corresponding verification JSON, verify it before anything else.
+4. **`DONE`** — if `candidate_count == 0` and `unresolved_count == 0`, stop.
+5. **`BLOCKED_NO_CONCRETE_TASKS`** — if continuation is needed but no concrete open tasks exist in `TASK_POOL.json`.
+6. **Task selection** — from concrete open tasks, in this priority order:
    - `derive_family`, `implement_family`, `revise_guess` (followup tasks, sorted by priority then facet count)
    - `family_compression` (only when `candidate_count >= 20`)
    - `derive_interaction_family`

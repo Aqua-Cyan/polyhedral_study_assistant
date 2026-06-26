@@ -52,14 +52,16 @@ Clarify whether the user wants a complete convex-hull description, a valid inequ
 
 ### 3. Create or use a problem adapter
 
-A new problem should be placed under `examples/<problem_id>/` with a `README.md` defining the model and a `study.py` exposing:
+The user provides only the problem definition in `examples/<problem_id>/README.md`. The AI agent generates the adapter automatically.
 
-```python
-def run(max_union_size: int = 5) -> dict:
-    ...
-```
+When the regulator detects that `examples/<problem_id>/study.py` does not exist, it returns a `CREATE_ADAPTER` decision. The prompt builder generates instructions for Claude Code to:
 
-The adapter must generate machine-readable research state and all required artifacts.
+- read the README and `docs/adapter-standard.md`;
+- create `model.py`, `families.py`, `derive.py`, and `study.py`;
+- expose `run(max_union_size: int = 5) -> dict`;
+- write all required artifacts.
+
+The adapter must generate machine-readable research state and all required artifacts. After creation, the loop continues with the standard research workflow.
 
 ### 4. Generate staged finite instances
 
@@ -107,11 +109,13 @@ The project includes a deterministic regulator in `src/psa/agent/regulator.py`. 
 
 ### Regulator priority chain
 
-1. **`RUN_STUDY_FIRST`** — no state file exists yet.
-2. **`VERIFY_FAMILY_GUESS`** — any guess JSON without a matching verification JSON; this takes precedence over all other tasks.
-3. **`DONE`** — `candidate_count == 0` and `unresolved_count == 0`.
-4. **`BLOCKED_NO_CONCRETE_TASKS`** — continuation needed but no open concrete tasks.
-5. **Task selection** — `derive_family`/`implement_family`/`revise_guess` first, then `family_compression` (when `candidate_count >= 20`), then `derive_interaction_family`, then `analyze_unresolved_signature`, then fallback.
+1. **`CREATE_ADAPTER`** — no `examples/<problem_id>/study.py` exists; generate adapter from README.
+2. **`RUN_STUDY_FIRST`** — no state file exists yet.
+3. **`VERIFY_FAMILY_GUESS`** — any guess JSON without a matching verification JSON; this takes precedence over all other tasks.
+4. **`DONE`** — `candidate_count == 0` and `unresolved_count == 0`.
+5. **`BLOCKED_NO_CONCRETE_TASKS`** — continuation needed but no open concrete tasks.
+6. **Task selection** — `derive_family`/`implement_family`/`revise_guess` first, then `family_compression` (when `candidate_count >= 20`), then `derive_interaction_family`, then `analyze_unresolved_signature`, then fallback.
+
 
 ### Running the loop
 

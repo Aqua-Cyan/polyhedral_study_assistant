@@ -164,30 +164,24 @@ python scripts/psa_loop.py --problem <problem_id> [options]
 
 ## Adding a new problem
 
-1. **Define the problem.** Create `examples/<your_problem>/README.md` with the formal set definition, variables, domains, and parameters.
+You only need to write the problem definition. The AI agent generates the adapter code automatically.
 
-2. **Create the adapter.** Write `examples/<your_problem>/study.py` exposing:
+1. **Define the problem.** Create `examples/<your_problem>/README.md` with the formal set definition, variables, domains, index sets, parameters, and assumptions. Use LaTeX notation for mathematics.
 
-   ```python
-   def run(max_union_size: int = 5) -> dict:
-       ...
-   ```
+2. **Create `__init__.py` files.** Ensure `examples/__init__.py` exists (can be empty). Create an empty `examples/<your_problem>/__init__.py`.
 
-   The adapter must return a state dictionary and write all required artifacts (state JSON, report, task pool, memory files). You can split logic into `model.py`, `families.py`, and `derive.py` as needed.
-
-3. **Create `__init__.py` files.** Ensure `examples/__init__.py` and `examples/<your_problem>/__init__.py` exist (they can be empty).
-
-4. **Test the adapter.**
-
-   ```bash
-   python scripts/study.py --problem <your_problem> --max-size 5
-   ```
-
-5. **Run the full loop.**
+3. **Run the loop.**
 
    ```bash
    python scripts/psa_loop.py --problem <your_problem> --max-size 5 --execute --rounds 10
    ```
+
+   On the first round, the regulator detects that no `study.py` adapter exists. Instead of crashing, it generates a prompt asking Claude Code to read your `README.md` and create the adapter files (`model.py`, `families.py`, `derive.py`, `study.py`). Claude Code reads the problem definition, generates the adapter, and tests it. Subsequent rounds proceed with the normal research loop (facet computation, family guessing, verification, derivation).
+
+4. **Review the generated adapter.** After the first round, inspect `examples/<your_problem>/study.py` and the generated artifacts. The AI agent makes assumptions about notation, instance scaling, and initial family templates — verify these match your intent.
+
+5. **Iterate.** If the adapter needs corrections, either edit it directly or let the loop continue — the regulator will dispatch refinement tasks as needed.
+
 
 ## Configuration
 

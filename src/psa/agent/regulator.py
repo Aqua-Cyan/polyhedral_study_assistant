@@ -46,6 +46,45 @@ class SingleRegulator:
     """
 
     def decide(self, state: ResearchState) -> RegulatorDecision:
+        # Check whether the problem adapter exists before anything else.
+        adapter_file = state.project_root / "examples" / state.problem_id / "study.py"
+        if not adapter_file.exists():
+            return RegulatorDecision(
+                decision="CREATE_ADAPTER",
+                reason=(
+                    f"No study adapter found at examples/{state.problem_id}/study.py. "
+                    f"The user has provided examples/{state.problem_id}/README.md. "
+                    f"Read the README and generate a thin problem-specific adapter."
+                ),
+                selected_task={
+                    "id": f"{state.problem_id}-create-adapter",
+                    "problem_id": state.problem_id,
+                    "type": "create_adapter",
+                    "status": "open",
+                    "priority": 0,
+                    "assigned_agent": "StudyAdapter",
+                    "readme_file": f"examples/{state.problem_id}/README.md",
+                    "required_actions": [
+                        f"read examples/{state.problem_id}/README.md",
+                        f"create examples/{state.problem_id}/model.py with variables, domains, feasibility predicate, and instance generation",
+                        f"create examples/{state.problem_id}/families.py if candidate family templates are known",
+                        f"create examples/{state.problem_id}/derive.py if derivation logic is known",
+                        f"create examples/{state.problem_id}/study.py exposing run(max_union_size: int) -> dict",
+                        f"ensure examples/__init__.py and examples/{state.problem_id}/__init__.py exist",
+                        "the adapter must write reports/<problem_id>_state.json, reports/<problem_id>_report.md, tasks/TASK_POOL.json, and memory files",
+                        "preserve the user's original notation in reports",
+                    ],
+                    "success_criterion": (
+                        "examples/<problem_id>/study.py exists, imports cleanly, "
+                        "and run(max_union_size=5) returns a state dict with a summary."
+                    ),
+                },
+                next_agent="StudyAdapter",
+                success_criterion=(
+                    "Generate a working problem adapter from the README definition."
+                ),
+                stop=False,
+            )
         if not state.raw_state:
             return RegulatorDecision(
                 decision="RUN_STUDY_FIRST",
