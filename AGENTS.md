@@ -6,11 +6,14 @@ This repository develops a Python research harness for polyhedral studies in int
 
 Build reliable tools for:
 
-- representing linear inequalities;
-- normalizing inequalities;
-- parsing and organizing PORTA outputs;
-- matching computed facets against candidate inequality families;
-- producing reproducible reports.
+- representing and normalizing linear inequalities;
+- enumerating 0-1 feasible points;
+- computing convex-hull inequalities with cddlib (via pycddlib);
+- classifying and clustering facet-defining inequalities;
+- matching computed facets against candidate symbolic inequality families;
+- recording c-MIR / mixed-MIR / MIR-over-MIR derivation certificates;
+- running a regulator-controlled research loop that dispatches tasks to AI agents;
+- producing reproducible, machine-readable reports and state files.
 
 ## Development priorities
 
@@ -20,9 +23,16 @@ Build reliable tools for:
 4. Clear JSON/Markdown outputs.
 5. No unsupported claims about complete convex hull descriptions.
 
-## Commands
+## Architecture
 
-After the Python package is initialized, use:
+### Generic layer (`src/psa/`)
 
-```bash
-python -m pytest
+| Module | Purpose |
+|---|---|
+| `inequality.py` | `LinearInequality` representation |
+| `normalize.py` | Inequality normalization |
+| `binary_points.py` | 0-1 point enumeration |
+| `backends/` | cddlib backend wrappers |
+| `cmir.py` | c-MIR, mixed MIR, MIR-over-MIR |
+| `derivation.py` | Derivation-attempt records |
+| `family.py` | Family
